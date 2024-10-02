@@ -6,7 +6,8 @@ int main(void)
 {
   for (x = 0; x < 10; x++, printf("\n"))
     for (y = 0; y < 10; y++)
-      printf("X");
+      // Format specifier %c expects ASCII value.
+      printf("%c", 49);
 
   return 0;
 }
