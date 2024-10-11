@@ -12,10 +12,7 @@ int main(void)
 
   printf("y before: %d\n", y);
 
-  if (x >= 1 && x <= 20)
-  {
-    y = x;
-  }
+  y = (x >= 1 && x <= 20) ? x : y;
 
   printf("y after: %d\n", y);
 
