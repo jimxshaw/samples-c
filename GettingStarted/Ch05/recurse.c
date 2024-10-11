@@ -10,9 +10,9 @@ int main(void)
   puts("Enter an integer >= 0 and <= 8: ");
   scanf("%d", &x);
 
-  if (x > 8 || x < 0)
+  if (x > 8)
   {
-    printf("Only values from 1 to 8 are acceptable!\n");
+    printf("Only values from 0 to 8 are acceptable!\n");
   }
   else
   {
