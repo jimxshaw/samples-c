@@ -2,7 +2,7 @@
 
 void print_times_table(int outer, int inner);
 
-main()
+int main(void)
 {
   int outer = 5;
   int inner = 5;
@@ -11,7 +11,7 @@ main()
 
   print_times_table(outer, inner);
 
-  return;
+  return 0;
 }
 
 void print_times_table(int outer, int inner)
