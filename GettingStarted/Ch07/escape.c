@@ -13,7 +13,7 @@ int main(void)
   printf("\"We\'d like to welcome you to the menu program!\"\n");
   printf("Are you ready to make a choice\?\n");
 
-  while (choice != QUIT)
+  do
   {
     choice = get_menu_choice();
 
@@ -28,7 +28,7 @@ int main(void)
         print_report();
       }
     }
-  }
+  } while (choice != QUIT);
 
   printf("You chose to Quit!\n");
 
