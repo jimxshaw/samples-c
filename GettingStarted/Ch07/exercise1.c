@@ -1,25 +1,33 @@
 #include <stdio.h>
 
+#define QUIT 99
+
 int num;
-int first_run = 1;
+int numbers[6];
 
 int main(void)
 {
+  int counter = 0;
+
   do
   {
-    if (first_run != 1)
-    {
-      puts("Only Even integers are allowed, try again");
-    }
-
-    puts("Input an Even integer");
+    puts("Input an integer please");
     scanf("%d", &num);
 
-    first_run = 0;
+    if (num == QUIT)
+    {
+      break;
+    }
 
-  } while (num % 2 != 0);
+    if (counter < 6)
+    {
+      numbers[counter] = num;
+      counter++;
+    }
 
-  printf("Congrats! Your number is %d\n", num);
+  } while (num != QUIT && counter < 6);
+
+  printf("Congrats!\n");
 
   return 0;
 }
