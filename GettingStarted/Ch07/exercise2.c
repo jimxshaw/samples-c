@@ -1,12 +1,15 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #define QUIT 99
 
 float a, b;
 int array[10];
+int minMax[5];
 
 void product(float a, float b);
 void sum(int array[], int size);
+int findMinMax(int minMax[], int size, bool findMax);
 
 int main(void)
 {
@@ -14,7 +17,7 @@ int main(void)
 
   do
   {
-    puts("Menu: input 1 for Product, 2 for Sum, 99 to Quit");
+    puts("Menu: 1 Product, 2 Sum, 3 MinMax, 99 Quit");
     scanf("%d", &menuChoice);
 
     if (menuChoice == 1)
@@ -44,6 +47,28 @@ int main(void)
 
         sum(array, 10);
       }
+      else
+      {
+        if (menuChoice == 3)
+        {
+          int counter = 0;
+          int input;
+
+          puts("Input a number, or 0 to Quit");
+
+          do
+          {
+            scanf("%d", &input);
+
+            minMax[counter] = input;
+            counter++;
+
+          } while (input != 0 && counter < 5);
+
+          printf("Max: %d\n", findMinMax(minMax, 5, true));
+          printf("Max: %d\n", findMinMax(minMax, 5, false));
+        }
+      }
     }
 
   } while (menuChoice != 99);
@@ -66,4 +91,29 @@ void sum(int array[], int size)
   }
 
   printf("Sum: %d\n", result);
+}
+
+int findMinMax(int minMax[], int size, bool findMax)
+{
+  int result = minMax[0];
+
+  for (int i = 0; i < size; i++)
+  {
+    if (findMax)
+    {
+      if (minMax[i] > result)
+      {
+        result = minMax[i];
+      }
+    }
+    else
+    {
+      if (minMax[i] < result)
+      {
+        result = minMax[i];
+      }
+    }
+  }
+
+  return result;
 }
