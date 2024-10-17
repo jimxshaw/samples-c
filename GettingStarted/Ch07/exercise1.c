@@ -11,7 +11,7 @@ int main(void)
 
   do
   {
-    puts("Input an integer please");
+    puts("Input an even integer please");
     scanf("%d", &num);
 
     if (num == QUIT)
@@ -19,7 +19,7 @@ int main(void)
       break;
     }
 
-    if (counter < 6)
+    if (counter < 6 && num % 2 == 0)
     {
       numbers[counter] = num;
       counter++;
