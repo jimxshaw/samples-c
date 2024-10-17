@@ -5,13 +5,15 @@
 int num;
 int numbers[6];
 
+void output_array(int numbers[], int size);
+
 int main(void)
 {
   int counter = 0;
 
   do
   {
-    puts("Input an integer please");
+    puts("Input an even integer please");
     scanf("%d", &num);
 
     if (num == QUIT)
@@ -19,7 +21,7 @@ int main(void)
       break;
     }
 
-    if (counter < 6)
+    if (counter < 6 && num % 2 == 0)
     {
       numbers[counter] = num;
       counter++;
@@ -27,7 +29,19 @@ int main(void)
 
   } while (num != QUIT && counter < 6);
 
-  printf("Congrats!\n");
+  printf("Congrats! Here are the numbers: \n");
+
+  output_array(numbers, 6);
 
   return 0;
+}
+
+void output_array(int numbers[], int size)
+{
+  for (int i = 0; i < size; i++)
+  {
+    printf("%d\t", numbers[i]);
+  }
+
+  printf("\n");
 }
