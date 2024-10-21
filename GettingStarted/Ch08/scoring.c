@@ -13,8 +13,8 @@
 // {{}, 18, 25, 27, 20},  // Player 4
 // {{}, 25, 20, 35, 40}   // Player 5
 // }
-int scores[6][5];
-float score_average[6], best_average;
+int scores[PLAYERS + 1][GAMES + 1];
+float score_average[PLAYERS + 1], best_average;
 int point_total, best_player;
 int counter1, counter2;
 
