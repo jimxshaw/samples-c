@@ -28,7 +28,7 @@ int main(void)
     // Inner loop is for each player in the specific game.
     for (counter1 = 1; counter1 <= PLAYERS; counter1++)
     {
-      printf("What did player #%d score in the game\?", counter1);
+      printf("What did player #%d score in the game\? ", counter1);
 
       scanf("%d", &scores[counter1][counter2]);
     }
