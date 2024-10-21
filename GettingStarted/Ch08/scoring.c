@@ -14,7 +14,7 @@
 // {{}, 25, 20, 35, 40}   // Player 5
 // }
 int scores[6][5];
-float score_average, best_average;
+float score_average[6], best_average;
 int point_total, best_player;
 int counter1, counter2;
 
@@ -33,6 +33,33 @@ int main(void)
       scanf("%d", &scores[counter1][counter2]);
     }
   }
+
+  // Loop through the array to calculate scoring average per player.
+  for (counter1 = 1; counter1 <= PLAYERS; counter1++)
+  {
+    point_total = 0;
+
+    for (counter2 = 1; counter2 <= GAMES; counter2++)
+    {
+      point_total += scores[counter1][counter2];
+    }
+
+    score_average[counter1] = (float)point_total / GAMES;
+  }
+
+  best_average = 0;
+
+  for (counter1 = 1; counter1 <= PLAYERS; counter1++)
+  {
+    if (score_average[counter1] > best_average)
+    {
+      best_average = score_average[counter1];
+      best_player = counter1;
+    }
+  }
+
+  printf("\nPlayer #%d had the best scoring average,\n", best_player);
+  printf("at %.2f points per game.\n", score_average[best_player]);
 
   return 0;
 }
