@@ -10,9 +10,12 @@ int outer, middle, inner;
 
 void outputArray();
 void outputMultiArray();
+void outputMatchArray();
 
 int main(void)
 {
+  outputMatchArray();
+
   outputArray();
 
   outputMultiArray();
@@ -81,5 +84,19 @@ void outputMultiArray()
 
       getchar();
     }
+  }
+}
+
+void outputMatchArray()
+{
+  int array[10];
+  int new[10];
+
+  for (int i = 0; i < 10; i++)
+  {
+    array[i] = i;
+    printf("array[%d] = %d\n", i, array[i]);
+
+    new[i] =
   }
 }
