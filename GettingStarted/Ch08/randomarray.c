@@ -1,12 +1,61 @@
 /* Shows multidimensional arrays */
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+
+#define ELEMENTS 1000
 
 int random_array[10][10][10];
 int outer, middle, inner;
 
+void outputArray();
+void outputMultiArray();
+
 int main(void)
 {
+  outputArray();
+
+  outputMultiArray();
+
+  return 0;
+}
+
+void outputArray()
+{
+  int array[ELEMENTS];
+  double sum = 0;
+  int count = 1;
+
+  srand(time(NULL));
+
+  for (int i = 0; i < ELEMENTS; i++)
+  {
+    array[i] = rand();
+    sum += array[i];
+  }
+
+  printf("Average: %.2f\n", sum / ELEMENTS);
+
+  for (int i = 0; i < ELEMENTS; i++)
+  {
+    printf("array[%d] = %d\n", i, array[i]);
+
+    if (count == 10)
+    {
+      printf("\nPress Enter to continue, CTRL+C to quit.\n");
+      getchar();
+
+      count = 0;
+    }
+
+    count += 1;
+  }
+}
+
+void outputMultiArray()
+{
+  srand(time(NULL));
+
   for (outer = 0; outer < 10; outer++)
   {
     for (middle = 0; middle < 10; middle++)
@@ -33,6 +82,4 @@ int main(void)
       getchar();
     }
   }
-
-  return 0;
 }
