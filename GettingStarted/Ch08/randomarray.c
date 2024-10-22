@@ -10,12 +10,26 @@ int outer, middle, inner;
 
 void outputArray();
 void outputMultiArray();
+void outputMatchArray();
+
+void outputMatchArray()
+{
+  int array[10];
+
+  for (int i = 0; i < 10; i++)
+  {
+    array[i] = i;
+    printf("array[%d] = %d\n", i, array[i]);
+  }
+}
 
 int main(void)
 {
-  outputArray();
+  outputMatchArray();
 
-  outputMultiArray();
+  // outputArray();
+
+  // outputMultiArray();
 
   return 0;
 }
