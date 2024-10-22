@@ -16,45 +16,45 @@
 int scores[PLAYERS + 1][GAMES + 1];
 float score_average[PLAYERS + 1], best_average;
 int point_total, best_player;
-int counter1, counter2;
+int counterA, counterB;
 
 int main(void)
 {
   // Outer loop is for each game.
-  for (counter2 = 1; counter2 <= GAMES; counter2++)
+  for (counterB = 1; counterB <= GAMES; counterB++)
   {
-    printf("\nGetting scoring totals for Game #%d.\n", counter2);
+    printf("\nGetting scoring totals for Game #%d.\n", counterB);
 
     // Inner loop is for each player in the specific game.
-    for (counter1 = 1; counter1 <= PLAYERS; counter1++)
+    for (counterA = 1; counterA <= PLAYERS; counterA++)
     {
-      printf("What did player #%d score in the game\? ", counter1);
+      printf("What did player #%d score in the game\? ", counterA);
 
-      scanf("%d", &scores[counter1][counter2]);
+      scanf("%d", &scores[counterA][counterB]);
     }
   }
 
   // Loop through the array to calculate scoring average per player.
-  for (counter1 = 1; counter1 <= PLAYERS; counter1++)
+  for (counterA = 1; counterA <= PLAYERS; counterA++)
   {
     point_total = 0;
 
-    for (counter2 = 1; counter2 <= GAMES; counter2++)
+    for (counterB = 1; counterB <= GAMES; counterB++)
     {
-      point_total += scores[counter1][counter2];
+      point_total += scores[counterA][counterB];
     }
 
-    score_average[counter1] = (float)point_total / GAMES;
+    score_average[counterA] = (float)point_total / GAMES;
   }
 
   best_average = 0;
 
-  for (counter1 = 1; counter1 <= PLAYERS; counter1++)
+  for (counterA = 1; counterA <= PLAYERS; counterA++)
   {
-    if (score_average[counter1] > best_average)
+    if (score_average[counterA] > best_average)
     {
-      best_average = score_average[counter1];
-      best_player = counter1;
+      best_average = score_average[counterA];
+      best_player = counterA;
     }
   }
 
