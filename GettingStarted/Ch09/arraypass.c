@@ -5,6 +5,8 @@
 
 int array[MAX], count;
 
+int largest(int array[], int length);
+
 int main(void)
 {
   for (count = 0; count < MAX; count++)
