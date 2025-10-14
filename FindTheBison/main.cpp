@@ -20,6 +20,23 @@ using namespace chrono;
 
 int main()
 {
-  std::cout << "Hello, C++!!!" << std::endl;
+  const int TEST_CASES = 10;
+
+  for (int index = 1; index <= TEST_CASES; ++index)
+  {
+    try
+    {
+    }
+    catch (exception &ex)
+    {
+      cout << ex.what() << endl;
+      cout << endl
+           << "Press Enter once or twice to exit..." << endl;
+      cin.ignore();
+      cin.get();
+      exit(EXIT_FAILURE);
+    }
+  }
+
   return 0;
 }
