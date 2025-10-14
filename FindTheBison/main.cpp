@@ -27,8 +27,8 @@ int main()
     try
     {
       // Build the input and output filenames.
-      string inputFileName = "bisonsearchin" + string((fileIndex < 10 ? "0" : "")) + to_string(fileIndex) + ".txt";
-      string outputFileName = "bisonfoundin" + string((fileIndex < 10 ? "0" : "")) + to_string(fileIndex) + ".txt";
+      string inputFileName = string((fileIndex < 10 ? "0" : "")) + to_string(fileIndex) + "bisonsearchin.txt";
+      string outputFileName = string((fileIndex < 10 ? "0" : "")) + to_string(fileIndex) + "bisonfoundin.txt";
 
       // Open the input file.
       ifstream inputFile(inputFileName);
