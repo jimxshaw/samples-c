@@ -46,8 +46,21 @@ int main()
       // Start the timer.
       auto startTime = steady_clock::now();
 
-      // TODO: Implement the actual bison finding logic here.
+      // Logic to count the bison tracks.
       int bisonPatternCount = 0;
+      int backLegCount = 0;
+
+      for (size_t i = 1; i < pattern.length(); ++i)
+      {
+        if (pattern[i - 1] == '(' && pattern[i] == '(')
+        {
+          ++backLegCount;
+        }
+        else if (pattern[i - 1] == ')' && pattern[i] == ')')
+        {
+          bisonPatternCount += backLegCount;
+        }
+      }
 
       // Stop the timer.
       auto elapsedTime = duration_cast<nanoseconds>(steady_clock::now() - startTime);
