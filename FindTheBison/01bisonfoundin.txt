@@ -1,4 +1,4 @@
-Time Elapsed (nano) : 798
+Time Elapsed (nano) : 842
 Found Pattern Count : 4
 Searched Pattern    : 
 
