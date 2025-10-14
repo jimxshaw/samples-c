@@ -88,7 +88,7 @@ int main()
     {
       cout << ex.what() << endl;
       cout << endl
-           << "Press Enter once or twice to exit..." << endl;
+           << "Press Enter twice to exit..." << endl;
       cin.ignore();
       cin.get();
       exit(EXIT_FAILURE);
