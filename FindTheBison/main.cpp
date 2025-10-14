@@ -22,10 +22,54 @@ int main()
 {
   const int TEST_CASES = 10;
 
-  for (int index = 1; index <= TEST_CASES; ++index)
+  for (int fileIndex = 1; fileIndex <= TEST_CASES; ++fileIndex)
   {
     try
     {
+      // Build the input and output filenames.
+      string inputFileName = "bisonsearchin" + (fileIndex < 10 ? "0" : "") + to_string(fileIndex) + ".txt";
+      string outputFileName = "bisonfoundin" + (fileIndex < 10 ? "0" : "") + to_string(fileIndex) + ".txt";
+
+      // Open the input file.
+      ifstream inputFile(inputFileName);
+
+      if (inputFile.fail())
+      {
+        throw domain_error(LineInfo("Failed to open the input file: " + inputFileName, __FILE__, __LINE__));
+      }
+
+      // Read the string pattern from the input file.
+      string pattern;
+      getline(inputFile, pattern);
+      inputFile.close();
+
+      // Start the timer.
+      auto startTime = steady_clock::now();
+
+      // TODO: Implement the actual bison finding logic here.
+      int bisonPatternCount = 0;
+
+      // Stop the timer.
+      auto elapsedTime = duration_cast<nanoseconds>(steady_clock::now() - startTime);
+
+      // Open the output file.
+      ofstream outputFile(outputFileName);
+
+      if (outputFile.fail())
+      {
+        throw domain_error(LineInfo("Failed to open output file: " + outputFileName, __FILE__, __LINE__));
+      }
+
+      outputFile.imbue(locale(""));
+
+      // Write to the output file.
+      outputFile << "Time Elapsed (nano) : " << elapsedTime.count() << endl;
+      outputFile << "Found Pattern Count : " << bisonPatternCount << endl;
+      outputFile << "Searched Pattern    : " << endl
+                 << endl;
+      outputFile << pattern << endl;
+
+      outputFile.close();
     }
     catch (exception &ex)
     {
