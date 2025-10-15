@@ -34,46 +34,38 @@ int main(int argc, char *argv[])
 {
   try
   {
-    if (argc != 2)
+    if (argc < 2)
     {
       throw domain_error(LineInfo("Usage: diagonal < textstring>", __FILE__, __LINE__));
     }
 
-    // create a file with 16 empty rows, required by with od -c command
+    // Define variables.
+    char const dot = '.';
+    int length = 0;
+    int counter = 0;
 
     ofstream ofilestreamobj("diagonal.bin", ios::binary | ios::out);
+
     if (!ofilestreamobj.is_open())
-      throw domain_error(LineInfo("Open Failed File: diagonal.bin", __FILE__, __LINE__));
-
-    char const space = '.';
-
-    for (int line = 0; line < LINESIZE; line++)
-      for (int column = 0; column < LINESIZE; column++)
-      {
-        ofilestreamobj.write(reinterpret_cast<const char *>(&space), sizeof(space));
-        if (ofilestreamobj.fail())
-          throw domain_error(LineInfo("write() failed", __FILE__, __LINE__));
-      }
-
-    // Each line of od outputs is 16 characters
-    // So, to make the output diagonal, we will use 0, 17, 34, ....
-
-    int n = strlen(argv[1]);
-    for (int i = 0; i < n; i++)
     {
-      ofilestreamobj.seekp((static_cast<long long>(LINESIZE) + 1) * static_cast<basic_ostream<char, char_traits<char>>::off_type>(i),
-                           ios::beg);
-      if (ofilestreamobj.fail())
-        throw domain_error(LineInfo("seekp() failed", __FILE__, __LINE__));
-
-      ofilestreamobj.write(reinterpret_cast<const char *>(&argv[1][i]), sizeof(argv[1][i]));
-      if (ofilestreamobj.fail())
-        throw domain_error(LineInfo("write() failed", __FILE__, __LINE__));
+      throw domain_error(LineInfo("Open Failed File: diagonal.bin", __FILE__, __LINE__));
     }
 
-    ofilestreamobj.close();
+    // Replace all 0 with the dot in the binary file.
+    for (int col = 0; col < LINESIZE * (argc + 1); col++)
+    {
+      for (int col = 0; col < LINESIZE; col++)
+      {
+        ofilestreamobj.write(reinterpret_cast<const char *>(&dot), sizeof(dot));
 
-    cout << endl
+        if (ofilestreamobj.fail())
+        {
+          throw domain_error(LineInfo("Write() to Output File Failed", __FILE__, __LINE__));
+        }
+      }
+    }
+
+        cout << endl
          << "diagonal.bin has been created." << endl
          << endl
          << "Use od -c diagonal.bin to see the contents." << endl
