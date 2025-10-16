@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
       blockCounter += 256;
     }
 
+    ofilestreamobj.close();
+
     cout << endl
          << "diagonal.bin has been created." << endl
          << endl
