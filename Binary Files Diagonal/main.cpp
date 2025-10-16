@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     // Define variables.
     char const dot = '.';
     int length = 0;
-    int counter = 0;
+    int blockCounter = 0;
 
     ofstream ofilestreamobj("diagonal.bin", ios::binary | ios::out);
 
@@ -60,12 +60,70 @@ int main(int argc, char *argv[])
 
         if (ofilestreamobj.fail())
         {
-          throw domain_error(LineInfo("Write() to Output File Failed", __FILE__, __LINE__));
+          throw domain_error(LineInfo("write() to Output File Failed", __FILE__, __LINE__));
         }
       }
     }
 
-        cout << endl
+    // Each line of od outputs 16 characters.
+    // To make the diagonal output, we will use 0, 15, 30, etc.
+    for (int argumentNumber = 1; argumentNumber < argc; argumentNumber++)
+    {
+      // This is the word's length that we will loop over.
+      int wordLength = strlen(argv[argumentNumber]);
+
+      // Even argument number will go from top right to buttom left.
+      if (argumentNumber % 2 == 0)
+      {
+        // The adjustment moves to where the next letter will be.
+        int adjustment = 15;
+
+        for (int i = 0; i < wordLength; i++)
+        {
+          ofilestreamobj.seekp(blockCounter + (adjustment * (i + 1)), ios::beg);
+
+          if (ofilestreamobj.fail())
+          {
+            throw domain_error(LineInfo("seekp() to Output File Failed", __FILE__, __LINE__));
+          }
+
+          ofilestreamobj.write(&argv[argumentNumber][i], 1);
+
+          if (ofilestreamobj.fail())
+          {
+            throw domain_error(LineInfo("write() to Output File Failed", __FILE__, __LINE__));
+          }
+        }
+      }
+      else
+      {
+        // Odd argument number will go from top left to bottom right.
+
+        // The adjustment moves to where the next letter will be.
+        int adjustment = 17;
+
+        for (int i = 0; i < wordLength; i++)
+        {
+          ofilestreamobj.seekp(blockCounter + (adjustment * (i + 1)), ios::beg);
+
+          if (ofilestreamobj.fail())
+          {
+            throw domain_error(LineInfo("seekp() to Output File Failed", __FILE__, __LINE__));
+          }
+
+          ofilestreamobj.write(&argv[argumentNumber][i], 1);
+
+          if (ofilestreamobj.fail())
+          {
+            throw domain_error(LineInfo("write() to Output File Failed", __FILE__, __LINE__));
+          }
+        }
+      }
+
+      blockCounter += 256;
+    }
+
+    cout << endl
          << "diagonal.bin has been created." << endl
          << endl
          << "Use od -c diagonal.bin to see the contents." << endl
