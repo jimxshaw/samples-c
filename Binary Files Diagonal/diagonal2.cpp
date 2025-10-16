@@ -41,10 +41,9 @@ int main(int argc, char *argv[])
 
     // Define variables.
     char const dot = '.';
-    int length = 0;
     int blockCounter = 0;
 
-    ofstream ofilestreamobj("diagonal.bin", ios::binary | ios::out);
+    ofstream ofilestreamobj("diagonal2.bin", ios::binary | ios::out);
 
     if (!ofilestreamobj.is_open())
     {
@@ -126,9 +125,9 @@ int main(int argc, char *argv[])
     ofilestreamobj.close();
 
     cout << endl
-         << "diagonal.bin has been created." << endl
+         << "diagonal2.bin has been created." << endl
          << endl
-         << "Use od -c diagonal.bin to see the contents." << endl
+         << "Use od -c diagonal2.bin to see the contents." << endl
          << endl;
   }
   catch (exception &e)
