@@ -86,6 +86,62 @@ void getQuotesArray(char *lines[], unsigned &noLines)
 // The parent sends messages to the child and reads responses from the child.
 void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], int numParentMessagesToSend)
 {
+  // Close unused pipe ends.
+  // Close read end of the parent to child pipe.
+  close(pipeParentWriteChildRead[READ]);
+  // Close write end of the child to parent pipe.
+  close(pipeParentReadChildWrite[WRITE]);
+
+  // Declare message buffers.
+  // This is what the parent sends to the child.
+  char sendMessage[MAX_PIPE_MESSAGE_SIZE];
+  // This is what the parent receives from the child.
+  char receiveMessage[MAX_PIPE_MESSAGE_SIZE];
+
+  // Loop to request the quotes.
+  for (int i = 0; i < numParentMessagesToSend; ++i)
+  {
+    // Send "Get Quote" message to the child.
+    strcpy(sendMessage, "Get Quote");
+
+    if (write(pipeParentWriteChildRead[WRITE], sendMessage, strlen(sendMessage) + 1) == -1)
+    {
+      throw domain_error(LineInfo("Parent failed to write 'Get Quote'", __FILE__, __LINE__));
+    }
+
+    cout << "In Parent: Write to pipe getQuoteMessage sent Message: " << sendMessage << endl;
+
+    // Clear receive buffer before reading.
+    memset(receiveMessage, 0, MAX_PIPE_MESSAGE_SIZE);
+
+    // Read child's response.
+    if (read(pipeParentReadChildWrite[READ], receiveMessage, MAX_PIPE_MESSAGE_SIZE) == -1)
+    {
+      throw domain_error(LineInfo("Parent failed to read quote", __FILE__, __LINE__));
+    }
+
+    cout << "In Parent: Read from pipe pipeParentReadChildMessage read Message:\n"
+         << receiveMessage << endl
+         << endl;
+
+    cout << "-----------------------------------\n";
+
+    // Send "Exit" message to child after done.
+    strcpy(sendMessage, "Exit");
+
+    if (write(pipeParentWriteChildRead[WRITE], sendMessage, strlen(sendMessage) + 1) == -1)
+    {
+      throw domain_error(LineInfo("Parent failed to write Exit message", __FILE__, __LINE__));
+    }
+
+    cout << "In Parent: Write to pipe ParentWriteChildExitMessage sent Message: " << sendMessage << endl;
+
+    // Close the used pipe ends.
+    close(pipeParentWriteChildRead[WRITE]);
+    close(pipeParentReadChildWrite[READ]);
+
+    cout << "Parent Done" << std::endl;
+  }
 }
 
 // The child receives messages from the parent and responds with quotes.
