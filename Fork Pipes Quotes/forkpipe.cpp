@@ -140,13 +140,92 @@ void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChil
     close(pipeParentWriteChildRead[WRITE]);
     close(pipeParentReadChildWrite[READ]);
 
-    cout << "Parent Done" << std::endl;
+    cout << "Parent Done" << endl;
   }
 }
 
 // The child receives messages from the parent and responds with quotes.
 void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], char *lines[], unsigned noLines)
 {
+  // Close unused pipe ends.
+  // Close write end of parent to child.
+  close(pipeParentWriteChildRead[WRITE]);
+  // CLose Read end of child to parent.
+  close(pipeParentReadChildWrite[READ]);
+
+  // Seed the random number generator once.
+  srand(static_cast<unsigned>(time(nullptr)));
+
+  // Message buffers.
+  // This is for reading messages from parent.
+  char receiveBuffer[MAX_PIPE_MESSAGE_SIZE];
+  // This is for sending messages back to parent.
+  char sendBuffer[MAX_PIPE_MESSAGE_SIZE];
+
+  // Infinite loop until 'Exit' message.
+  while (true)
+  {
+    // Clear buffer before each read.
+    memset(receiveBuffer, 0, MAX_PIPE_MESSAGE_SIZE);
+
+    // Read from the parent.
+    ssize_t bytesRead = read(pipeParentWriteChildRead[READ], receiveBuffer, MAX_PIPE_MESSAGE_SIZE);
+
+    if (bytesRead == -1)
+    {
+      throw domain_error(LineInfo("Child failed to read message from parent", __FILE__, __LINE__));
+    }
+
+    cout << "In Child : Read from pipe pipeParentWriteChildMessage read Message: "
+         << receiveBuffer << endl;
+
+    // Handle the message type.
+    if (strcmp(receiveBuffer, "Exit") == 0)
+    {
+      // Parent wants to end the communication.
+      break;
+    }
+    else if (strcmp(receiveBuffer, "Get Quote") == 0)
+    {
+      // Select a random quote from the array
+      int randomIndex = rand() % noLines;
+
+      memset(sendBuffer, 0, MAX_PIPE_MESSAGE_SIZE); // Clear send buffer
+      strcpy(sendBuffer, lines[randomIndex]);
+
+      // Send quote to parent.
+      if (write(pipeParentReadChildWrite[WRITE], sendBuffer, strlen(sendBuffer) + 1) == -1)
+      {
+        throw domain_error(LineInfo("Child failed to write quote to parent", __FILE__, __LINE__));
+      }
+
+      cout << "In Child : Write to pipe pipeParentReadChildMessage sent Message:\n"
+           << sendBuffer << endl
+           << endl;
+    }
+    else
+    {
+      // Invalid message received — send back an error response
+      memset(sendBuffer, 0, MAX_PIPE_MESSAGE_SIZE);
+      strcpy(sendBuffer, "Invalid request");
+
+      if (write(pipeParentReadChildWrite[WRITE], sendBuffer, strlen(sendBuffer) + 1) == -1)
+      {
+        throw domain_error(LineInfo("Child failed to write invalid message to parent", __FILE__, __LINE__));
+      }
+
+      cout << "In Child : Invalid request received, sent back to parent\n"
+           << endl;
+    }
+  }
+
+  // Clean up and close pipes.
+  // Child's read end of parent to child pipe.
+  close(pipeParentWriteChildRead[READ]);
+  // Child's write end of child to parent pipe.
+  close(pipeParentReadChildWrite[WRITE]);
+
+  cout << "Child Done" << endl;
 }
 
 int main(int argc, char *argv[])
