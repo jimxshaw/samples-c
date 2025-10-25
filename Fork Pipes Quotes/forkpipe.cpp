@@ -125,23 +125,23 @@ void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChil
          << endl;
 
     cout << "-----------------------------------\n";
-
-    // Send "Exit" message to child after done.
-    strcpy(sendMessage, "Exit");
-
-    if (write(pipeParentWriteChildRead[WRITE], sendMessage, strlen(sendMessage) + 1) == -1)
-    {
-      throw domain_error(LineInfo("Parent failed to write Exit message", __FILE__, __LINE__));
-    }
-
-    cout << "In Parent: Write to pipe ParentWriteChildExitMessage sent Message: " << sendMessage << endl;
-
-    // Close the used pipe ends.
-    close(pipeParentWriteChildRead[WRITE]);
-    close(pipeParentReadChildWrite[READ]);
-
-    cout << "Parent Done" << endl;
   }
+
+  // Send "Exit" message to child after done.
+  strcpy(sendMessage, "Exit");
+
+  if (write(pipeParentWriteChildRead[WRITE], sendMessage, strlen(sendMessage) + 1) == -1)
+  {
+    throw domain_error(LineInfo("Parent failed to write Exit message", __FILE__, __LINE__));
+  }
+
+  cout << "In Parent: Write to pipe ParentWriteChildExitMessage sent Message: " << sendMessage << endl;
+
+  // Close the used pipe ends.
+  close(pipeParentWriteChildRead[WRITE]);
+  close(pipeParentReadChildWrite[READ]);
+
+  cout << "Parent Done" << endl;
 }
 
 // The child receives messages from the parent and responds with quotes.
