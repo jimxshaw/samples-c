@@ -27,8 +27,8 @@ using namespace std;
 
 static const char *const QUOTES_FILE_NAME = "quotes.txt";
 
-const int MAX_BUFFER_SIZE = 1000;
-const int MAX_QUOTES = 1000;
+const int MAX_PIPE_MESSAGE_SIZE = 1000;
+const int MAX_QUOTE_LINE_SIZE = 1000;
 
 const int READ = 0;
 const int WRITE = 1;
@@ -40,7 +40,7 @@ const int CHILD_PID = 0;
 
 // Read lines from text file into the array and sets
 // the total number of lines found.
-void getQuotesArray(char *quotesArray[], unsigned &numOfLines)
+void getQuotesArray(char *lines[], unsigned &numOfLines)
 {
   FILE *filePointer;
   filePointer = fopen(QUOTES_FILE_NAME, "r");
@@ -50,13 +50,13 @@ void getQuotesArray(char *quotesArray[], unsigned &numOfLines)
     throw domain_error(LineInfo("Error when trying to open file", __FILE__, __LINE__));
   }
 
-  char input[MAX_BUFFER_SIZE];
+  char input[MAX_QUOTE_LINE_SIZE];
 
   int size = sizeof(input);
 
-  while (fgets(input, size, filePointer) != NULL)
+  while (fgets(input, size, filePointer) != NULL && numOfLines < MAX_QUOTE_LINE_SIZE)
   {
-    quotesArray[numOfLines] = strdup(input);
+    lines[numOfLines] = strdup(input);
     numOfLines++;
   }
 }
@@ -83,7 +83,7 @@ void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChil
       throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
     }
 
-    char ParentReadChildMessage[MAX_BUFFER_SIZE] = {0};
+    char ParentReadChildMessage[MAX_PIPE_MESSAGE_SIZE] = {0};
 
     if (read(pipeParentReadChildWrite[READ], ParentReadChildMessage, sizeof(ParentReadChildMessage)) == PIPE_ERROR)
     {
@@ -117,14 +117,14 @@ void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChil
 }
 
 // The child receives messages from the parent and responds with quotes.
-void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], char *quotesArray[], unsigned numOfLines)
+void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], char *lines[], unsigned numOfLines)
 {
-  if (close(pipeParentReadChildWrite[WRITE]) == PIPE_ERROR)
+  if (close(pipeParentReadChildWrite[READ]) == PIPE_ERROR)
   {
     throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
   }
 
-  if (close(pipeParentWriteChildRead[READ]) == PIPE_ERROR)
+  if (close(pipeParentWriteChildRead[WRITE]) == PIPE_ERROR)
   {
     throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
   }
@@ -134,7 +134,7 @@ void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChild
 
   do
   {
-    char receivedMessage[MAX_BUFFER_SIZE] = {0};
+    char receivedMessage[MAX_PIPE_MESSAGE_SIZE] = {0};
 
     if (read(pipeParentWriteChildRead[READ], receivedMessage, sizeof(receivedMessage)) == PIPE_ERROR)
     {
@@ -163,11 +163,11 @@ void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChild
 
       char quoteMessage[1000] = {0};
 
-      int size = strlen(quotesArray[randomLineChoice]);
+      int size = strlen(lines[randomLineChoice]);
 
       for (unsigned i = 0; i < size; i++)
       {
-        quoteMessage[i] = *(quotesArray[randomLineChoice] + i);
+        quoteMessage[i] = *(lines[randomLineChoice] + i);
 
         cout << "In Child: Write to pipe for pipeParentReadChildMessage sent Message: " << endl
              << quoteMessage << endl;
@@ -194,14 +194,14 @@ void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChild
     }
   } while (true);
 
-  if (close(pipeParentReadChildWrite[READ]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close read pipe", __FILE__, __LINE__));
-  }
-
-  if (close(pipeParentWriteChildRead[WRITE]) == PIPE_ERROR)
+  if (close(pipeParentReadChildWrite[WRITE]) == PIPE_ERROR)
   {
     throw domain_error(LineInfo("Error when trying to close write pipe", __FILE__, __LINE__));
+  }
+
+  if (close(pipeParentWriteChildRead[READ]) == PIPE_ERROR)
+  {
+    throw domain_error(LineInfo("Error when trying to close read pipe", __FILE__, __LINE__));
   }
 
   cout << "Child Done" << endl;
@@ -222,11 +222,11 @@ int main(int argc, char *argv[])
     // Convert argument to integer, atoi is ascii to integer.
     // argv[0] is the program name and argv[1] is the number.
     int numQuotesToRequest = atoi(argv[1]);
-    char *quotesArray[1000];
+    char *lines[1000];
     unsigned numOfLines;
 
     // Retrieve the quotes array from the file.
-    getQuotesArray(quotesArray, numOfLines);
+    getQuotesArray(lines, numOfLines);
 
     // Process ID.
     int pid;
@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
     else if (pid == CHILD_PID)
     {
       // Child Process.
-      executeChildProcess(pipeParentWriteChildRead, pipeParentReadChildWrite, quotesArray, numOfLines);
+      executeChildProcess(pipeParentWriteChildRead, pipeParentReadChildWrite, lines, numOfLines);
     }
     else
     {
