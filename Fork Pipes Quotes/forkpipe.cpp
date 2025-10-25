@@ -168,7 +168,7 @@ void executeChildProcess(int pipeParentWriteChildRead[2], int pipeParentReadChil
 
       for (int i = 0; i < size; i++)
       {
-        quoteMessage[i] == *(quotesArray[randomLineChoice] + i);
+        quoteMessage[i] = *(quotesArray[randomLineChoice] + i);
 
         cout << "In Child: Write to pipe for pipeParentReadChildMessage sent Message: " << endl
              << quoteMessage << endl;
