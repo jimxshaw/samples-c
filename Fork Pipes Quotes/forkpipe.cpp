@@ -225,6 +225,12 @@ void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChild
   // Child's write end of child to parent pipe.
   close(pipeParentReadChildWrite[WRITE]);
 
+  // Free all dynamically allocated quote lines.
+  for (int i = 0; i < noLines; ++i)
+  {
+    delete[] lines[i];
+  }
+
   cout << "Child Done" << endl;
 }
 
