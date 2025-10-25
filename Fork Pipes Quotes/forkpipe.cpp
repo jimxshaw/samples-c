@@ -90,11 +90,11 @@ int main(int argc, char *argv[])
     // Convert argument to integer, atoi is ascii to integer.
     // argv[0] is the program name and argv[1] is the number.
     int numQuotesToRequest = atoi(argv[1]);
-    char *lines[1000];
+    char *quotesArray[1000];
     unsigned numOfLines;
 
     // Retrieve the quotes array from the file.
-    getQuotesArray(lines, numOfLines);
+    getQuotesArray(quotesArray, numOfLines);
 
     // Process ID.
     int pid;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     int pipeParentWriteChildRead[2];
 
     // Parent will read from [0], child will write to [1].
-    int pipeParentReadWhileWrite[2];
+    int pipeParentReadChildWrite[2];
 
     // TODO: Create the pipes. Throw if fail.
     if (pipe(pipeParentWriteChildRead) == PIPE_ERROR)
@@ -112,21 +112,30 @@ int main(int argc, char *argv[])
       throw domain_error(LineInfo("Error: could not create pipe for pipeParentWriteChildRead", __FILE__, __LINE__));
     }
 
-    if (pipe(pipeParentReadWhileWrite) == PIPE_ERROR)
+    if (pipe(pipeParentReadChildWrite) == PIPE_ERROR)
     {
-      throw domain_error(LineInfo("Error: could not create pipe for pipeParentReadWhileWrite", __FILE__, __LINE__));
+      throw domain_error(LineInfo("Error: could not create pipe for pipeParentReadChildWrite", __FILE__, __LINE__));
     }
 
     cout << endl
          << endl;
 
-    // TODO: Load quotes from the file into memory.
+    pid = fork();
 
-    // TODO: Fork a child process.
-
-    // TODO: Run either the parent or child based on PID.
-
-    // TODO: Clean up allocated quote memory.
+    if (pid == FORK_ERROR)
+    {
+      throw domain_error(LineInfo("Error when trying to fork", __FILE__, __LINE__));
+    }
+    else if (pid == CHILD_PID)
+    {
+      // Child Process.
+      executeChildProcess(pipeParentWriteChildRead, pipeParentReadChildWrite, quotesArray, numOfLines);
+    }
+    else
+    {
+      // Parent Process.
+      executeParentProcess(pipeParentWriteChildRead, pipeParentReadChildWrite, numQuotesToRequest);
+    }
   }
   catch (exception &e)
   {
