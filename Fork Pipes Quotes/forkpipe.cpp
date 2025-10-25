@@ -38,14 +38,12 @@ const int FORK_ERROR = -1;
 
 const int CHILD_PID = 0;
 
-const char GET_QUOTE_MESSAGE[] = "Get Quote";
-const char EXIT_MESSAGE[] = "Exit";
-
 // Read lines from text file into the array and sets
 // the total number of lines found.
 void getQuotesArray(char *quotesArray[], unsigned &numOfLines)
 {
-  FILE *filePointer = fopen(QUOTES_FILE_NAME, "r");
+  FILE *filePointer;
+  filePointer = fopen(QUOTES_FILE_NAME, "r");
 
   if (filePointer == NULL)
   {
@@ -64,7 +62,7 @@ void getQuotesArray(char *quotesArray[], unsigned &numOfLines)
 }
 
 // The parent sends messages to the child and reads responses from the child.
-void executeParentProcess(int pipeParentWriteChildRead[2], int pipeParentReadChildWrite[2], int numQuotesToRequest)
+void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], int numQuotesToRequest)
 {
   if (close(pipeParentWriteChildRead[READ]) == PIPE_ERROR)
   {
@@ -76,11 +74,11 @@ void executeParentProcess(int pipeParentWriteChildRead[2], int pipeParentReadChi
     throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
   }
 
-  for (int i = 0; i < numQuotesToRequest; i++)
+  for (unsigned i = 0; i < numQuotesToRequest; i++)
   {
     cout << "In Parent: Write to pipe getQuoteMessage sent Message: Get Quote" << endl;
 
-    if (write(pipeParentWriteChildRead[WRITE], GET_QUOTE_MESSAGE, sizeof(GET_QUOTE_MESSAGE)) == PIPE_ERROR)
+    if (write(pipeParentWriteChildRead[WRITE], "Get Quote", sizeof("Get Quote")) == PIPE_ERROR)
     {
       throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
     }
@@ -98,7 +96,7 @@ void executeParentProcess(int pipeParentWriteChildRead[2], int pipeParentReadChi
          << "---------------------------" << endl;
   }
 
-  if (write(pipeParentWriteChildRead[WRITE], EXIT_MESSAGE, sizeof(EXIT_MESSAGE)) == PIPE_ERROR)
+  if (write(pipeParentWriteChildRead[WRITE], "Exit", sizeof("Exit")) == PIPE_ERROR)
   {
     throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
   }
@@ -119,7 +117,7 @@ void executeParentProcess(int pipeParentWriteChildRead[2], int pipeParentReadChi
 }
 
 // The child receives messages from the parent and responds with quotes.
-void executeChildProcess(int pipeParentWriteChildRead[2], int pipeParentReadChildWrite[2], char *quotesArray[], unsigned numOfLines)
+void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], char *quotesArray[], unsigned numOfLines)
 {
   if (close(pipeParentReadChildWrite[WRITE]) == PIPE_ERROR)
   {
@@ -146,7 +144,8 @@ void executeChildProcess(int pipeParentWriteChildRead[2], int pipeParentReadChil
     cout << "In Child: Read from pipe for pipeParentWriteChildMessage read Message: " << receivedMessage << endl;
 
     // Check the message.
-    char *indexPointer = strstr(receivedMessage, EXIT_MESSAGE);
+    char *indexPointer;
+    indexPointer = strstr(receivedMessage, "Exit");
 
     // Exit message is found.
     if (indexPointer != NULL)
@@ -154,7 +153,7 @@ void executeChildProcess(int pipeParentWriteChildRead[2], int pipeParentReadChil
       break;
     }
 
-    indexPointer = strstr(receivedMessage, GET_QUOTE_MESSAGE);
+    indexPointer = strstr(receivedMessage, "Get Quote");
 
     // Get Quote message is found.
     if (indexPointer != NULL)
@@ -166,7 +165,7 @@ void executeChildProcess(int pipeParentWriteChildRead[2], int pipeParentReadChil
 
       int size = strlen(quotesArray[randomLineChoice]);
 
-      for (int i = 0; i < size; i++)
+      for (unsigned i = 0; i < size; i++)
       {
         quoteMessage[i] = *(quotesArray[randomLineChoice] + i);
 
@@ -239,7 +238,6 @@ int main(int argc, char *argv[])
     // Parent will read from [0], child will write to [1].
     int pipeParentReadChildWrite[2];
 
-    // TODO: Create the pipes. Throw if fail.
     if (pipe(pipeParentWriteChildRead) == PIPE_ERROR)
     {
       throw domain_error(LineInfo("Error: could not create pipe for pipeParentWriteChildRead", __FILE__, __LINE__));
