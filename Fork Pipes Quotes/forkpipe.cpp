@@ -45,7 +45,22 @@ const char EXIT_MESSAGE[] = "Exit";
 // the total number of lines found.
 void getQuotesArray(char *quotesArray[], unsigned &numOfLines)
 {
-  // TODO: Implement.
+  FILE *filePointer = fopen(QUOTES_FILE_NAME, "r");
+
+  if (filePointer == NULL)
+  {
+    throw domain_error(LineInfo("Error when trying to open file", __FILE__, __LINE__));
+  }
+
+  char input[MAX_BUFFER_SIZE];
+
+  int size = sizeof(input);
+
+  while (fgets(input, size, filePointer) != NULL)
+  {
+    quotesArray[numOfLines] = strdup(input);
+    numOfLines++;
+  }
 }
 
 // The parent sends messages to the child and reads responses from the child.
