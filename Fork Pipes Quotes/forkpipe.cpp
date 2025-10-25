@@ -21,7 +21,7 @@ Purpose: Loads quotes from a file. Create two pipes, one for
 #include <sys/types.h>
 #include <stdexcept>
 
-#include <LineInfo.h>
+#include "LineInfo.h"
 
 using namespace std;
 
