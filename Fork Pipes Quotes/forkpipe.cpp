@@ -40,171 +40,57 @@ const int CHILD_PID = 0;
 
 // Read lines from text file into the array and sets
 // the total number of lines found.
-void getQuotesArray(char *lines[], unsigned &numOfLines)
+void getQuotesArray(char *lines[], unsigned &noLines)
 {
-  FILE *filePointer;
-  filePointer = fopen(QUOTES_FILE_NAME, "r");
+  // Open file in read mode.
+  FILE *file = fopen(QUOTES_FILE_NAME, "r");
 
-  if (filePointer == NULL)
+  if (!file)
   {
     throw domain_error(LineInfo("Error when trying to open file", __FILE__, __LINE__));
   }
 
-  char input[MAX_QUOTE_LINE_SIZE];
+  // Temp buffer for each line.
+  char buffer[MAX_QUOTE_LINE_SIZE];
+  noLines = 0;
 
-  int size = sizeof(input);
-
-  while (fgets(input, size, filePointer) != NULL && numOfLines < MAX_QUOTE_LINE_SIZE)
+  // Read each line until the end of file or we reach the limit.
+  while (fgets(buffer, sizeof(buffer), file) != NULL)
   {
-    lines[numOfLines] = strdup(input);
-    numOfLines++;
+    // Remove trailing new line.
+    size_t len = strlen(buffer);
+    if (len > 0 && buffer[len - 1] == '\n')
+    {
+      buffer[len - 1] = '\0';
+    }
+
+    // Dynamically allocate memory for this line.
+    lines[noLines] = new char[len + 1];
+
+    // Copy into heap memory.
+    strcpy(lines[noLines], buffer);
+
+    noLines++;
+
+    // Prevent overflows if file has too many lines.
+    if (noLines >= MAX_QUOTE_LINE_SIZE)
+    {
+      break;
+    }
   }
+
+  // Always close the file.
+  fclose(file);
 }
 
 // The parent sends messages to the child and reads responses from the child.
 void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], int numQuotesToRequest)
 {
-  if (close(pipeParentWriteChildRead[READ]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
-  }
-
-  if (close(pipeParentReadChildWrite[WRITE]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
-  }
-
-  for (unsigned i = 0; i < numQuotesToRequest; i++)
-  {
-    cout << "In Parent: Write to pipe getQuoteMessage sent Message: Get Quote" << endl;
-
-    if (write(pipeParentWriteChildRead[WRITE], "Get Quote", sizeof("Get Quote")) == PIPE_ERROR)
-    {
-      throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
-    }
-
-    char ParentReadChildMessage[MAX_PIPE_MESSAGE_SIZE] = {0};
-
-    if (read(pipeParentReadChildWrite[READ], ParentReadChildMessage, sizeof(ParentReadChildMessage)) == PIPE_ERROR)
-    {
-      throw domain_error(LineInfo("Error when trying to read pipe", __FILE__, __LINE__));
-    }
-
-    cout << "In Parent: Read from pipe for pipeParentReadChildMessage read Message: " << endl
-         << ParentReadChildMessage << endl
-         << endl
-         << "---------------------------" << endl;
-  }
-
-  if (write(pipeParentWriteChildRead[WRITE], "Exit", sizeof("Exit")) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
-  }
-
-  cout << "In Parent: Write to pipe for pipeParentWriteChildExitMessage sent Message: Exit" << endl;
-
-  if (close(pipeParentWriteChildRead[WRITE]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close write pipe", __FILE__, __LINE__));
-  }
-
-  if (close(pipeParentReadChildWrite[READ]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close read pipe", __FILE__, __LINE__));
-  }
-
-  cout << "Parent Done" << endl;
 }
 
 // The child receives messages from the parent and responds with quotes.
-void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], char *lines[], unsigned numOfLines)
+void executeChildProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], char *lines[], unsigned noLines)
 {
-  if (close(pipeParentReadChildWrite[READ]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
-  }
-
-  if (close(pipeParentWriteChildRead[WRITE]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
-  }
-
-  time_t t;
-  srand((unsigned)time(&t));
-
-  do
-  {
-    char receivedMessage[MAX_PIPE_MESSAGE_SIZE] = {0};
-
-    if (read(pipeParentWriteChildRead[READ], receivedMessage, sizeof(receivedMessage)) == PIPE_ERROR)
-    {
-      throw domain_error(LineInfo("Error when trying to read pipe", __FILE__, __LINE__));
-    }
-
-    cout << "In Child: Read from pipe for pipeParentWriteChildMessage read Message: " << receivedMessage << endl;
-
-    // Check the message.
-    char *indexPointer;
-    indexPointer = strstr(receivedMessage, "Exit");
-
-    // Exit message is found.
-    if (indexPointer != NULL)
-    {
-      break;
-    }
-
-    indexPointer = strstr(receivedMessage, "Get Quote");
-
-    // Get Quote message is found.
-    if (indexPointer != NULL)
-    {
-      // Get random quote line choice 0 to < numOfLines.
-      int randomLineChoice = (rand() % numOfLines);
-
-      char quoteMessage[1000] = {0};
-
-      int size = strlen(lines[randomLineChoice]);
-
-      for (unsigned i = 0; i < size; i++)
-      {
-        quoteMessage[i] = *(lines[randomLineChoice] + i);
-
-        cout << "In Child: Write to pipe for pipeParentReadChildMessage sent Message: " << endl
-             << quoteMessage << endl;
-
-        if (write(pipeParentReadChildWrite[WRITE], quoteMessage, sizeof(quoteMessage)) == PIPE_ERROR)
-        {
-          throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
-        }
-      }
-    }
-    else
-    {
-      // Invalid Message.
-      cout << "In Child: Invalid message received: " << endl
-           << receivedMessage << endl;
-
-      cout << "In Child: Write to pipe pipeParentReadChildMessage sent" << endl
-           << "Message: " << receivedMessage;
-
-      if (write(pipeParentReadChildWrite[WRITE], receivedMessage, sizeof(receivedMessage)) == PIPE_ERROR)
-      {
-        throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
-      }
-    }
-  } while (true);
-
-  if (close(pipeParentReadChildWrite[WRITE]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close write pipe", __FILE__, __LINE__));
-  }
-
-  if (close(pipeParentWriteChildRead[READ]) == PIPE_ERROR)
-  {
-    throw domain_error(LineInfo("Error when trying to close read pipe", __FILE__, __LINE__));
-  }
-
-  cout << "Child Done" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -217,55 +103,6 @@ int main(int argc, char *argv[])
     if (argc != 2)
     {
       throw domain_error(LineInfo("Usage: ./forkpipe <number of quotes to request>", __FILE__, __LINE__));
-    }
-
-    // Convert argument to integer, atoi is ascii to integer.
-    // argv[0] is the program name and argv[1] is the number.
-    int numQuotesToRequest = atoi(argv[1]);
-    char *lines[1000];
-    unsigned numOfLines;
-
-    // Retrieve the quotes array from the file.
-    getQuotesArray(lines, numOfLines);
-
-    // Process ID.
-    int pid;
-
-    // Declare file descriptor pipe arrays.
-    // Child will read from [0], parent will write to [1].
-    int pipeParentWriteChildRead[2];
-
-    // Parent will read from [0], child will write to [1].
-    int pipeParentReadChildWrite[2];
-
-    if (pipe(pipeParentWriteChildRead) == PIPE_ERROR)
-    {
-      throw domain_error(LineInfo("Error: could not create pipe for pipeParentWriteChildRead", __FILE__, __LINE__));
-    }
-
-    if (pipe(pipeParentReadChildWrite) == PIPE_ERROR)
-    {
-      throw domain_error(LineInfo("Error: could not create pipe for pipeParentReadChildWrite", __FILE__, __LINE__));
-    }
-
-    cout << endl
-         << endl;
-
-    pid = fork();
-
-    if (pid == FORK_ERROR)
-    {
-      throw domain_error(LineInfo("Error when trying to fork", __FILE__, __LINE__));
-    }
-    else if (pid == CHILD_PID)
-    {
-      // Child Process.
-      executeChildProcess(pipeParentWriteChildRead, pipeParentReadChildWrite, lines, numOfLines);
-    }
-    else
-    {
-      // Parent Process.
-      executeParentProcess(pipeParentWriteChildRead, pipeParentReadChildWrite, numQuotesToRequest);
     }
   }
   catch (exception &e)
