@@ -66,7 +66,56 @@ void getQuotesArray(char *quotesArray[], unsigned &numOfLines)
 // The parent sends messages to the child and reads responses from the child.
 void executeParentProcess(int pipeParentWriteChildRead[2], int pipeParentReadChildWrite[2], int numQuotesToRequest)
 {
-  // TODO: Implement.
+  if (close(pipeParentWriteChildRead[READ]) == PIPE_ERROR)
+  {
+    throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
+  }
+
+  if (close(pipeParentReadChildWrite[WRITE]) == PIPE_ERROR)
+  {
+    throw domain_error(LineInfo("Error when trying to close pipe", __FILE__, __LINE__));
+  }
+
+  for (int i = 0; i < numQuotesToRequest; i++)
+  {
+    cout << "In Parent: Write to pipe getQuoteMessage sent Message: Get Quote" << endl;
+
+    if (write(pipeParentWriteChildRead[WRITE], "Get Quote", sizeof("Get Quote")) == PIPE_ERROR)
+    {
+      throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
+    }
+
+    char ParentReadChildMessage[MAX_BUFFER_SIZE] = {0};
+
+    if (read(pipeParentReadChildWrite[READ], ParentReadChildMessage, sizeof(ParentReadChildMessage)) == PIPE_ERROR)
+    {
+      throw domain_error(LineInfo("Error when trying to read pipe", __FILE__, __LINE__));
+    }
+
+    cout << "In Parent: Read from pipe for pipeParentReadChildMessage read Message: " << endl
+         << ParentReadChildMessage << endl
+         << endl
+         << "---------------------------" << endl;
+  }
+
+  if (write(pipeParentWriteChildRead[WRITE], "Exit", sizeof("Exit")) == PIPE_ERROR)
+  {
+    throw domain_error(LineInfo("Error when trying to write pipe", __FILE__, __LINE__));
+  }
+
+  cout << "In Parent: Write to pipe for pipeParentWriteChildExitMessage sent Message: Exit" << endl;
+
+  if (close(pipeParentWriteChildRead[WRITE]) == PIPE_ERROR)
+  {
+    throw domain_error(LineInfo("Error when trying to close write pipe", __FILE__, __LINE__));
+  }
+
+  if (close(pipeParentReadChildWrite[READ]) == PIPE_ERROR)
+  {
+    throw domain_error(LineInfo("Error when trying to close read pipe", __FILE__, __LINE__));
+  }
+
+  cout << "Parent Done" << endl;
 }
 
 // The child receives messages from the parent and responds with quotes.
