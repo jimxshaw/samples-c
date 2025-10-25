@@ -84,7 +84,7 @@ void getQuotesArray(char *lines[], unsigned &noLines)
 }
 
 // The parent sends messages to the child and reads responses from the child.
-void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], int numQuotesToRequest)
+void executeParentProcess(int pipeParentWriteChildRead[], int pipeParentReadChildWrite[], int numParentMessagesToSend)
 {
 }
 
@@ -103,6 +103,54 @@ int main(int argc, char *argv[])
     if (argc != 2)
     {
       throw domain_error(LineInfo("Usage: ./forkpipe <number of quotes to request>", __FILE__, __LINE__));
+    }
+
+    // Convert argument to integer, the number of quotes to request.
+    int numQuotesToRequest = atoi(argv[1]);
+
+    if (numQuotesToRequest <= 0)
+    {
+      throw domain_error(LineInfo("Quote request number must be 1 or more", __FILE__, __LINE__));
+    }
+
+    // Initialize pipes.
+    // Parent writes, Child reads.
+    int pipePWriteCRead[2];
+    // Child writes, Parent reads.
+    int pipePReadCWrite[2];
+
+    if (pipe(pipePWriteCRead) == -1)
+    {
+      throw domain_error(LineInfo("Failed to create pipe for parent to child", __FILE__, __LINE__));
+    }
+
+    if (pipe(pipePReadCWrite) == -1)
+    {
+      throw domain_error(LineInfo("Failed to create pipe for child to parent", __FILE__, __LINE__));
+    }
+
+    // Load quotes from file.
+    char *quotes[MAX_QUOTE_LINE_SIZE];
+    unsigned quoteCount = 0;
+
+    getQuotesArray(quotes, quoteCount);
+
+    // Create child process.
+    pid_t pid = fork();
+
+    if (pid < CHILD_PID)
+    {
+      throw domain_error(LineInfo("Fork failed", __FILE__, __LINE__));
+    }
+    else if (pid == CHILD_PID)
+    {
+      // Child Process.
+      executeChildProcess(pipePWriteCRead, pipePReadCWrite, quotes, quoteCount);
+    }
+    else
+    {
+      // Parent Process.
+      executeParentProcess(pipePWriteCRead, pipePReadCWrite, numQuotesToRequest);
     }
   }
   catch (exception &e)
