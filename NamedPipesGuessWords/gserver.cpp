@@ -3,20 +3,20 @@ Program Name: Named Pipes Guess Words
 Date: 10/27/2025
 Author: James Shaw
 Purpose: This is a client-server word guessing game using named pipes,
-        forked processes, separate executables and a shared word list
-        list to provide randomized guess words.
+				forked processes, separate executables and a shared word list
+				list to provide randomized guess words.
 */
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <cstdlib>     // For rand(), srand()
-#include <ctime>       // For time()
-#include <unistd.h>    // For fork(), getpid()
-#include <fcntl.h>     // For open()
-#include <sys/stat.h>  // For mkfifo()
+#include <cstdlib>		 // For rand(), srand()
+#include <ctime>			 // For time()
+#include <unistd.h>		 // For fork(), getpid()
+#include <fcntl.h>		 // For open()
+#include <sys/stat.h>	 // For mkfifo()
 #include <sys/types.h> // For pid_t
-#include <sys/wait.h>  // For waitpid()
+#include <sys/wait.h>	 // For waitpid()
 
 #include "LineInfo.h" // Provided error handling
 
@@ -25,11 +25,11 @@ using namespace std;
 static const char *const WORDS_FILE_NAME = "words.txt";
 
 const string SERVER_REQUEST_PIPE = "request.pipe"; // Well-known pipe clients write to.
-const int MAX_TRIES = 12;                          // Max number of incorrect guesses.
-const int BUFFER_SIZE = 128;                       // For pipe I/O buffer.
+const int MAX_TRIES = 12;													 // Max number of incorrect guesses.
+const int BUFFER_SIZE = 128;											 // For pipe I/O buffer.
 
-vector<string> wordList;   // All words from words.txt.
-string clientPipeName;     // Received from client.
+vector<string> wordList;	 // All words from words.txt.
+string clientPipeName;		 // Received from client.
 string serverToClientPipe; // Named pipe used to send initial game data.
 string clientToServerPipe; // Pipe used by child process to read guesses.
 
@@ -75,29 +75,40 @@ string createHiddenWord(const string &word)
 
 int main()
 {
-        loadWordsFromFile(WORDS_FILE_NAME);
+	try
+	{
+		loadWordsFromFile(WORDS_FILE_NAME);
 
-        createRequestPipe();
+		createRequestPipe();
 
-        receiveClientPipeName();
+		receiveClientPipeName();
 
-        string word = chooseRandomWord();
+		string word = chooseRandomWord();
 
-        sendInitialGameData(word);
+		sendInitialGameData(word);
 
-        // Ford child to handle game loop.
-        pid_t pid = fork();
+		// Ford child to handle game loop.
+		pid_t pid = fork();
 
-        if (pid == 0)
-        {
-                // Child process.
-                runGameInChildProcess(word, clientToServerPipe);
-        }
-        else
-        {
-                // Parent process.
-                waitpid(pid, nullptr, 0);
-        }
+		if (pid == 0)
+		{
+			// Child process.
+			runGameInChildProcess(word, clientToServerPipe);
+		}
+		else
+		{
+			// Parent process.
+			waitpid(pid, nullptr, 0);
+		}
+	}
+	catch (exception &e)
+	{
+		cout << e.what() << endl;
+		cout << "\nPress Enter once or twice to exit..." << endl;
+		cin.ignore();
+		cin.get();
+		exit(EXIT_FAILURE);
+	}
 
-        return 0;
+	return 0;
 }
