@@ -24,9 +24,9 @@ using namespace std;
 
 static const char *const WORDS_FILE_NAME = "words.txt";
 
-const string REQUEST_PIPE = "request.pipe"; // Well-known pipe clients write to.
-const int MAX_TRIES = 12;                   // Max number of incorrect guesses.
-const int BUFFER_SIZE = 128;                // For pipe I/O buffer.
+const string SERVER_REQUEST_PIPE = "request.pipe"; // Well-known pipe clients write to.
+const int MAX_TRIES = 12;                          // Max number of incorrect guesses.
+const int BUFFER_SIZE = 128;                       // For pipe I/O buffer.
 
 vector<string> wordList;   // All words from words.txt.
 string clientPipeName;     // Received from client.
