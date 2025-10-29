@@ -36,6 +36,32 @@ string clientToServerPipe; // Pipe used by child process to read guesses.
 // Reads words from a given file and populates the global wordList vector.
 void loadWordsFromFile(const string &fileName)
 {
+	ifstream inFile(fileName);
+
+	// Check if the file opened successfully.
+	if (!inFile)
+	{
+		throw domain_error(LineInfo("Unable to open words file: " + fileName, __FILE__, __LINE__));
+	}
+
+	string line;
+
+	while (getline(inFile, line))
+	{
+		// Skip blank lines, if there are any.
+		if (!line.empty())
+		{
+			wordList.push_back(line);
+		}
+	}
+
+	inFile.close();
+
+	// Make sure we load at least one word.
+	if (wordList.empty())
+	{
+		throw domain_error(LineInfo("No words loaded from file: " + fileName, __FILE__, __LINE__));
+	}
 }
 
 // Creates the request pipe.
@@ -73,6 +99,13 @@ string createHiddenWord(const string &word)
 {
 }
 
+// Cleans up the known pipe after the server is done.
+void cleanUp()
+{
+	// Remove the known pipe.
+	unlink(SERVER_REQUEST_PIPE.c_str());
+}
+
 int main()
 {
 	try
@@ -100,6 +133,8 @@ int main()
 			// Parent process.
 			waitpid(pid, nullptr, 0);
 		}
+
+		cleanUp();
 	}
 	catch (exception &e)
 	{
