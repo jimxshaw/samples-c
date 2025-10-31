@@ -118,11 +118,11 @@ void receiveClientPipeName()
 // - the name of the server’s pipe (to receive future guesses)
 void sendInitialGameData(const string &chosenWord)
 {
-	// Create a string with underscores matching the word length.
-	string underscores(chosenWord.length(), '_');
+	// Create a string with dashes matching the word length.
+	string hidden = createHiddenWord(chosenWord);
 
-	// Create the message, which is underscores + new line + word length.
-	string messageToClient = underscores + "\n" + to_string(chosenWord.length());
+	// Create the message, which is dashes + new line + word length.
+	string messageToClient = hidden + "\n" + to_string(chosenWord.length());
 
 	// Convert message to C-style character array.
 	const char *messageBuffer = messageToClient.c_str();
@@ -156,11 +156,30 @@ void runGameInChildProcess(const string &word, const string &clientGuessPipe)
 // Randomly selects a word from wordList.
 string chooseRandomWord()
 {
+	// Make sure the word list is not empty.
+	if (wordList.empty())
+	{
+		throw domain_error(LineInfo("Word list is empty", __FILE__, __LINE__));
+	}
+
+	// Seed the random number generator only once.
+	static bool isRandomSeedInitialized = false;
+	if (!isRandomSeedInitialized)
+	{
+		srand(static_cast<unsigned int>(time(nullptr)));
+		isRandomSeedInitialized = true;
+	}
+
+	size_t randomIndex = static_cast<size_t>(rand()) % wordList.size();
+
+	return wordList[randomIndex];
 }
 
 // Creates a blanked-out version of a word, such as "-----".
 string createHiddenWord(const string &word)
 {
+	string hidden(word.length(), '-');
+	return hidden;
 }
 
 // Cleans up the known pipe after the server is done.
