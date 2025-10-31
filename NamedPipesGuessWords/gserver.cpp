@@ -67,6 +67,20 @@ void loadWordsFromFile(const string &fileName)
 // Creates the request pipe.
 void createRequestPipe()
 {
+	// Read-Write for owners.
+	const mode_t PIPE_PERMISSIONS = 0600;
+
+	// Try to create the FIFO file (named pipe).
+	if (mkfifo(SERVER_REQUEST_PIPE.c_str(), PIPE_PERMISSIONS) == -1)
+	{
+		if (errno != EEXIST)
+		{
+			// Only throw an error if it's NOT due to pipe already existing.
+			throw domain_error(LineInfo("Failed to create request pipe", __FILE__, __LINE__));
+		}
+
+		// If the pipe already exists then it's not a failure in this context.
+	}
 }
 
 // Reads the client's private pipe name from the well-known pipe.
