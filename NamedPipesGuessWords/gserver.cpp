@@ -26,7 +26,7 @@ static const char *const WORDS_FILE_NAME = "words.txt";
 
 const string SERVER_REQUEST_PIPE = "request.pipe"; // Well-known pipe clients write to.
 const int MAX_TRIES = 12;													 // Max number of incorrect guesses.
-const int BUFFER_SIZE = 128;											 // For pipe I/O buffer.
+const int BUFFER_SIZE = 100;											 // For pipe I/O buffer.
 
 vector<string> wordList;	 // All words from words.txt.
 string clientPipeName;		 // Received from client.
@@ -86,6 +86,29 @@ void createRequestPipe()
 // Reads the client's private pipe name from the well-known pipe.
 void receiveClientPipeName()
 {
+	char buffer[BUFFER_SIZE] = {0};
+
+	// Open the well-known pipe in read-only mode.
+	int fileDescriptor = open(SERVER_REQUEST_PIPE.c_str(), O_RDONLY);
+	if (fileDescriptor == -1)
+	{
+		throw domain_error(LineInfo("Failed to open request pipe", __FILE__, __LINE__));
+	}
+
+	// Read the client's private pipe name into buffer.
+	ssize_t bytesRead = read(fileDescriptor, buffer, sizeof(buffer));
+	if (bytesRead <= 0)
+	{
+		// Close if the read fails.
+		close(fileDescriptor);
+		throw domain_error(LineInfo("Failed to read client pipe name", __FILE__, __LINE__));
+	}
+
+	// Store the pipe name into the global string variable.
+	clientToServerPipe = string(buffer);
+
+	// Done with this pipe.
+	close(fileDescriptor);
 }
 
 // Sends the initial game setup to the client:
@@ -95,6 +118,33 @@ void receiveClientPipeName()
 // - the name of the server’s pipe (to receive future guesses)
 void sendInitialGameData(const string &chosenWord)
 {
+	// Create a string with underscores matching the word length.
+	string underscores(chosenWord.length(), '_');
+
+	// Create the message, which is underscores + new line + word length.
+	string messageToClient = underscores + "\n" + to_string(chosenWord.length());
+
+	// Convert message to C-style character array.
+	const char *messageBuffer = messageToClient.c_str();
+	ssize_t numOfBytesToWrite = messageToClient.length();
+
+	// Open the client's private pipe in write-only mode.
+	int pipeFileDescriptor = open(clientToServerPipe.c_str(), O_WRONLY);
+	if (pipeFileDescriptor == -1)
+	{
+		throw domain_error(LineInfo("Failed to open client's pipe for writing", __FILE__, __LINE__));
+	}
+
+	ssize_t numOfBytesWritten = write(pipeFileDescriptor, messageBuffer, numOfBytesToWrite);
+	if (numOfBytesWritten != numOfBytesToWrite)
+	{
+		// Close to avoid file descriptor leak.
+		close(pipeFileDescriptor);
+		throw domain_error(LineInfo("Failed to write complete message to client", __FILE__, __LINE__));
+	}
+
+	// Close pipe after writing.
+	close(pipeFileDescriptor);
 }
 
 // Handles the word-guessing game in a child process.

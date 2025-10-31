@@ -18,7 +18,7 @@ Purpose: This is a client-server word guessing game using named pipes,
 
 using namespace std;
 
-const int BUFFER_SIZE = 128;
+const int BUFFER_SIZE = 100;
 const int MAX_TRIES = 12;
 const string SERVER_REQUEST_PIPE = "request.pipe"; // Known pipe.
 
