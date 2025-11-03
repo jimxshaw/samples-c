@@ -27,6 +27,8 @@ static const char *const WORDS_FILE_NAME = "words.txt";
 const string SERVER_REQUEST_PIPE = "request.pipe"; // Well-known pipe clients write to.
 const int MAX_TRIES = 12;													 // Max number of incorrect guesses.
 const int BUFFER_SIZE = 100;											 // For pipe I/O buffer.
+const string SERVER_PIPE_PREFIX = "server";				 // E.g. "server_child.pipe".
+const mode_t PIPE_PERMISSIONS = 0600;							 // Read-Write for owners.
 
 vector<string> wordList;	 // All words from words.txt.
 string clientPipeName;		 // Received from client.
@@ -67,9 +69,6 @@ void loadWordsFromFile(const string &fileName)
 // Creates the request pipe.
 void createRequestPipe()
 {
-	// Read-Write for owners.
-	const mode_t PIPE_PERMISSIONS = 0600;
-
 	// Try to create the FIFO file (named pipe).
 	if (mkfifo(SERVER_REQUEST_PIPE.c_str(), PIPE_PERMISSIONS) == -1)
 	{
@@ -151,6 +150,117 @@ void sendInitialGameData(const string &chosenWord)
 // Listens for letter guesses and updates the game state.
 void runGameInChildProcess(const string &word, const string &clientGuessPipe)
 {
+	// Generate the name of the server pipe, which is used to
+	// receive guesses from the client.
+	string serverReadPipeName = SERVER_PIPE_PREFIX + "_child.pipe";
+
+	// Create the named pipe.
+	if (mkfifo(serverReadPipeName.c_str(), PIPE_PERMISSIONS) == -1 && errno != EEXIST)
+	{
+		throw domain_error(LineInfo("Failed to create child server pipe", __FILE__, __LINE__));
+	}
+
+	// Send the pipe name to the client via the client's pipe.
+	int clientWriteFd = open(clientGuessPipe.c_str(), O_WRONLY);
+	if (clientWriteFd == -1)
+	{
+		throw domain_error(LineInfo("Failed to open client pipe for writing to send child pipe name.", __FILE__, __LINE__));
+	}
+
+	if (write(clientWriteFd, serverReadPipeName.c_str(), serverReadPipeName.length()) == -1)
+	{
+		close(clientWriteFd);
+		throw domain_error(LineInfo("Failed to write child pipe name to client.", __FILE__, __LINE__));
+	}
+
+	close(clientWriteFd); // Done writing pipe name.
+
+	// Open the new server pipe for reading guesses from client.
+	int serverReadFd = open(serverReadPipeName.c_str(), O_RDONLY);
+	if (serverReadFd == -1)
+	{
+		throw domain_error(LineInfo("Failed to open child server pipe for reading.", __FILE__, __LINE__));
+	}
+
+	// Initialize game variables.
+	int tryCount = 1;
+
+	string currentGuess = createHiddenWord(word); // e.g., "------".
+
+	// Game loop: read guesses, update state, respond.
+	while (tryCount <= MAX_TRIES)
+	{
+		// Send current guess word to client.
+		int clientWriteFd = open(clientGuessPipe.c_str(), O_WRONLY);
+		if (clientWriteFd == -1)
+		{
+			close(serverReadFd);
+			throw domain_error(LineInfo("Failed to reopen client pipe for writing (sending updated word).", __FILE__, __LINE__));
+		}
+
+		string message = currentGuess;
+		if (write(clientWriteFd, message.c_str(), message.length()) == -1)
+		{
+			close(clientWriteFd);
+			close(serverReadFd);
+			throw domain_error(LineInfo("Failed to write current guess word to client.", __FILE__, __LINE__));
+		}
+		close(clientWriteFd);
+
+		// Read letter from client.
+		char guessedLetter;
+		int bytesRead = read(serverReadFd, &guessedLetter, 1);
+		if (bytesRead == -1)
+		{
+			close(serverReadFd);
+			throw domain_error(LineInfo("Failed to read guessed letter from client.", __FILE__, __LINE__));
+		}
+
+		// Update currentGuess with the guessed letter if it exists.
+		bool matchFound = false;
+		for (size_t i = 0; i < word.length(); ++i)
+		{
+			if (tolower(word[i]) == tolower(guessedLetter))
+			{
+				currentGuess[i] = word[i];
+				matchFound = true;
+			}
+		}
+
+		// Check for win.
+		if (currentGuess == word)
+		{
+			// Send winning message to client.
+			int winFd = open(clientGuessPipe.c_str(), O_WRONLY);
+			if (winFd != -1)
+			{
+				string winMessage = word + "\nYou Win!\n";
+				write(winFd, winMessage.c_str(), winMessage.length());
+				close(winFd);
+			}
+
+			break;
+		}
+
+		tryCount++;
+	}
+
+	// If out of tries, send loss message.
+	if (tryCount > MAX_TRIES)
+	{
+		int finalFd = open(clientGuessPipe.c_str(), O_WRONLY);
+		if (finalFd != -1)
+		{
+			string lossMessage = "Out of tries: " + to_string(MAX_TRIES) + "\nThe word is: " + targetWord + "\n";
+
+			write(finalFd, lossMessage.c_str(), lossMessage.length());
+			close(finalFd);
+		}
+	}
+
+	// Clean up the child server pipe.
+	close(serverReadFd);
+	unlink(serverReadPipeName.c_str());
 }
 
 // Randomly selects a word from wordList.
