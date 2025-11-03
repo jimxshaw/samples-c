@@ -70,6 +70,26 @@ void createAndOpenClientReadPipe(const string &pipeName)
 // Send pipe name to server via known pipe.
 void sendPipeNameToServer(const string &pipeName)
 {
+	// Open the well-known server pipe for writing, it's write-only.
+	int serverWriteFD = open(SERVER_REQUEST_PIPE.c_str(), O_WRONLY);
+
+	if (serverWriteFD == -1)
+	{
+		throw domain_error(LineInfo("Failed to open server request pipe", __FILE__, __LINE__));
+		exit(EXIT_FAILURE);
+	}
+
+	// Write the client's pipe name to the server.
+	ssize_t bytesWritten = write(serverWriteFD, pipeName.c_str(), pipeName.length());
+
+	if (bytesWritten == -1)
+	{
+		throw domain_error(LineInfo("Failed to write pipe name to server", __FILE__, __LINE__));
+		close(serverWriteFD);
+		exit(EXIT_FAILURE);
+	}
+
+	close(serverWriteFD);
 }
 
 // Open the server-provided pipe to write guesses.
