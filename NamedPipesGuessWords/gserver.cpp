@@ -152,7 +152,7 @@ void runGameInChildProcess(const string &word, const string &clientGuessPipe)
 {
 	// Generate the name of the server pipe, which is used to
 	// receive guesses from the client.
-	string serverReadPipeName = SERVER_PIPE_PREFIX + "_child.pipe";
+	string serverReadPipeName = SERVER_PIPE_PREFIX + "_child_" + to_string(getpid()) + ".pipe";
 
 	// Create the named pipe.
 	if (mkfifo(serverReadPipeName.c_str(), PIPE_PERMISSIONS) == -1 && errno != EEXIST)
