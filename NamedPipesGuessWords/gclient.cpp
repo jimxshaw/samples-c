@@ -30,6 +30,16 @@ int currentTry = 0;
 // Generate a unique client read pipe name.
 string createClientReadPipeName()
 {
+	// Prefix to identify this as a client read pipe.
+	const string pipePrefix = "client_read_pipe_";
+
+	// Get the process ID of the current client.
+	pid_t processId = getpid();
+
+	// Construct the pipe name: e.g., "client_read_pipe_12345"
+	string uniquePipeName = pipePrefix + to_string(processId);
+
+	return uniquePipeName;
 }
 
 // Create the client's read pipe and open it.
