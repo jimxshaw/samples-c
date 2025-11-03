@@ -20,24 +20,22 @@ using namespace std;
 
 const int BUFFER_SIZE = 100;
 const int MAX_TRIES = 12;
-const string SERVER_REQUEST_PIPE = "request.pipe"; // Known pipe.
+const string SERVER_REQUEST_PIPE = "request.pipe";		 // Known pipe.
+const string CLIENT_PIPE_PREFIX = "client_read_pipe_"; // Will be used to name our read pipe.
 
-string clientReadPipe;	// Client-created pipe for reading server responses.
 string clientWritePipe; // Server-created pipe for reading client guesses.
+string clientReadPipe;
+string wordToGuess; // The word we're trying to guess.
 
 int currentTry = 0;
+int clientReadFD = -1;								// Read game data from the server.
+const mode_t PIPE_PERMISSIONS = 0600; // Read-Write for owners.
 
 // Generate a unique client read pipe name.
 string createClientReadPipeName()
 {
-	// Prefix to identify this as a client read pipe.
-	const string pipePrefix = "client_read_pipe_";
-
-	// Get the process ID of the current client.
-	pid_t processId = getpid();
-
 	// Construct the pipe name: e.g., "client_read_pipe_12345"
-	string uniquePipeName = pipePrefix + to_string(processId);
+	string uniquePipeName = CLIENT_PIPE_PREFIX + to_string(getpid());
 
 	return uniquePipeName;
 }
@@ -45,6 +43,28 @@ string createClientReadPipeName()
 // Create the client's read pipe and open it.
 void createAndOpenClientReadPipe(const string &pipeName)
 {
+	// Create the named pipe (FIFO) with read/write permissions.
+	if (mkfifo(pipeName.c_str(), PIPE_PERMISSIONS) == -1)
+	{
+		if (errno != EEXIST)
+		{
+			cerr << "Error: Failed to create named pipe '" << pipeName << "': "
+					 << strerror(errno) << endl;
+			exit(EXIT_FAILURE);
+		}
+		// If pipe already exists, that's okay, continue.
+	}
+
+	// Open the named pipe for reading.
+	clientReadFD = open(pipeName.c_str(), O_RDONLY);
+	if (clientReadFD == -1)
+	{
+		cerr << "Error: Failed to open pipe '" << pipeName << "' for reading: "
+				 << strerror(errno) << endl;
+		exit(EXIT_FAILURE);
+	}
+
+	cout << "Client: Successfully created and opened read pipe '" << pipeName << "'" << endl;
 }
 
 // Send pipe name to server via known pipe.
