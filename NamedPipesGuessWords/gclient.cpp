@@ -29,6 +29,7 @@ string wordToGuess; // The word we're trying to guess.
 
 int currentTry = 0;
 int clientReadFD = -1;								// Read game data from the server.
+int clientWriteFD = -1;								// Writing guesses to server.
 const mode_t PIPE_PERMISSIONS = 0600; // Read-Write for owners.
 
 // Generate a unique client read pipe name.
@@ -95,11 +96,59 @@ void sendPipeNameToServer(const string &pipeName)
 // Open the server-provided pipe to write guesses.
 void openClientWritePipe(string &pipeName)
 {
+	// Open the pipe for write-only access.
+	if (open(pipeName.c_str(), O_WRONLY) == -1)
+	{
+		throw domain_error(LineInfo("Failed to open server pipe for writing guesses.", __FILE__, __LINE__));
+	}
 }
 
 // Read initial game setup from server (tries, word, server pipe name).
 void readGameInitFromServer(int &tryCount, string &wordToGuess, string &serverReadPipe)
 {
+	char buffer[BUFFER_SIZE] = {0};
+
+	// Read data from the server.
+	ssize_t bytesRead = read(clientReadFD, buffer, BUFFER_SIZE - 1); // leave room for null terminator
+	if (bytesRead <= 0)
+	{
+		throw runtime_error(LineInfo("Client failed to read initial game data from server", __FILE__, __LINE__));
+	}
+
+	buffer[bytesRead] = '\0'; // Null-terminate just in case.
+
+	// Split the input by lines.
+	vector<string> lines;
+	string currentLine;
+	for (int i = 0; i < bytesRead; ++i)
+	{
+		if (buffer[i] == '\n')
+		{
+			lines.push_back(currentLine);
+			currentLine.clear();
+		}
+		else
+		{
+			currentLine += buffer[i];
+		}
+	}
+
+	// Push any remaining line.
+	if (!currentLine.empty())
+	{
+		lines.push_back(currentLine);
+	}
+
+	// Expecting exactly 3 lines: word to guess, try count, server pipe name.
+	if (lines.size() != 3)
+	{
+		throw runtime_error(LineInfo("Malformed initial game data received from server", __FILE__, __LINE__));
+	}
+
+	// Assign values.
+	wordToGuess = lines[0];
+	tryCount = stoi(lines[1]);
+	serverReadPipe = lines[2];
 }
 
 // Game loop: display, get user input, send guess, update try count.
