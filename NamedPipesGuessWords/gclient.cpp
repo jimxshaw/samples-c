@@ -154,11 +154,119 @@ void readGameInitFromServer(int &tryCount, string &wordToGuess, string &serverRe
 // Game loop: display, get user input, send guess, update try count.
 void playGameLoop(int tryCount, const string &randomWord, const string &serverReadPipe)
 {
+	string currentHiddenWord(randomWord.length(), '-'); // start with all dashes
+	bool gameOver = false;
+
+	while (!gameOver)
+	{
+		cout << "\nWord: " << currentHiddenWord << "\n";
+		cout << "Tries: " << tryCount << "\n";
+
+		cout << "Enter a letter guess: ";
+		char guessChar;
+		cin >> guessChar;
+
+		// Send guess to server
+		string guessMessage(1, guessChar);
+		if (write(clientWriteFD, guessMessage.c_str(), guessMessage.length()) == -1)
+		{
+			throw runtime_error(LineInfo("Client failed to write guess to server", __FILE__, __LINE__));
+		}
+
+		// Read server response
+		char buffer[BUFFER_SIZE] = {0};
+		ssize_t bytesRead = read(clientReadFD, buffer, BUFFER_SIZE - 1);
+		if (bytesRead <= 0)
+		{
+			throw runtime_error(LineInfo("Client failed to read response from server", __FILE__, __LINE__));
+		}
+		buffer[bytesRead] = '\0';
+
+		// Parse response: format is 4 lines:
+		// 1. updated hidden word
+		// 2. result message (Correct or Incorrect)
+		// 3. updated try count
+		// 4. status (WIN, LOSE, CONTINUE)
+
+		string response(buffer);
+		vector<string> lines;
+		string line;
+
+		for (char ch : response)
+		{
+			if (ch == '\n')
+			{
+				lines.push_back(line);
+				line.clear();
+			}
+			else
+			{
+				line += ch;
+			}
+		}
+		if (!line.empty())
+		{
+			lines.push_back(line);
+		}
+
+		if (lines.size() != 4)
+		{
+			throw runtime_error(LineInfo("Malformed response from server", __FILE__, __LINE__));
+		}
+
+		currentHiddenWord = lines[0];
+		string resultMsg = lines[1];
+		tryCount = stoi(lines[2]);
+		string status = lines[3];
+
+		cout << resultMsg << "\n";
+
+		if (status == "WIN")
+		{
+			cout << "🎉 You guessed the word! The word was: " << randomWord << "\n";
+			gameOver = true;
+		}
+		else if (status == "LOSE")
+		{
+			cout << "💀 Game Over. The word was: " << randomWord << "\n";
+			gameOver = true;
+		}
+	}
 }
 
 // Clean up all pipes.
 void cleanUp()
 {
+	// Close client read pipe.
+	if (clientReadFD != -1)
+	{
+		if (close(clientReadFD) == -1)
+		{
+			cerr << LineInfo("Failed to close clientReadFD", __FILE__, __LINE__) << endl;
+		}
+		clientReadFD = -1;
+	}
+
+	// Close client write pipe.
+	if (clientWriteFD != -1)
+	{
+		if (close(clientWriteFD) == -1)
+		{
+			cerr << LineInfo("Failed to close clientWriteFD", __FILE__, __LINE__) << endl;
+		}
+		clientWriteFD = -1;
+	}
+
+	// Remove client's private read pipe
+	if (!clientReadPipe.empty())
+	{
+		if (unlink(clientReadPipe.c_str()) == -1)
+		{
+			cerr << LineInfo("Failed to unlink client read pipe: " + clientReadPipe, __FILE__, __LINE__) << endl;
+		}
+
+		clientReadPipe.clear();
+	}
 }
 
 int main()
