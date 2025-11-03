@@ -183,9 +183,42 @@ void runGameInChildProcess(const string &word, const string &clientGuessPipe)
 	}
 
 	// Initialize game variables.
-	int tryCount = 1;
+	int tryCount = 0;
 
 	string currentGuess = createHiddenWord(word); // e.g., "------".
+
+	// Send try count first.
+	int clientWriteFd = open(clientGuessPipe.c_str(), O_WRONLY);
+	if (clientWriteFd == -1)
+	{
+		throw domain_error(LineInfo("Server child failed to open client pipe to send try count", __FILE__, __LINE__));
+	}
+
+	string tryStr = to_string(tryCount);
+	if (write(clientWriteFd, tryStr.c_str(), tryStr.length()) == -1)
+	{
+		close(clientWriteFd);
+		throw domain_error(LineInfo("Server child failed to write try count to client", __FILE__, __LINE__));
+	}
+
+	close(clientWriteFd);
+
+	sleep(3); // Let client catch up.
+
+	// Send the random word.
+	clientWriteFd = open(clientGuessPipe.c_str(), O_WRONLY);
+	if (clientWriteFd == -1)
+	{
+		throw domain_error(LineInfo("Server child failed to open client pipe to send the word", __FILE__, __LINE__));
+	}
+
+	if (write(clientWriteFd, word.c_str(), word.length()) == -1)
+	{
+		close(clientWriteFd);
+		throw domain_error(LineInfo("Server child failed to write word to client", __FILE__, __LINE__));
+	}
+
+	close(clientWriteFd);
 
 	// Game loop: read guesses, update state, respond.
 	while (tryCount <= MAX_TRIES)
