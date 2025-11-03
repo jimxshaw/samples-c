@@ -251,7 +251,7 @@ void runGameInChildProcess(const string &word, const string &clientGuessPipe)
 		int finalFd = open(clientGuessPipe.c_str(), O_WRONLY);
 		if (finalFd != -1)
 		{
-			string lossMessage = "Out of tries: " + to_string(MAX_TRIES) + "\nThe word is: " + targetWord + "\n";
+			string lossMessage = "Out of tries: " + to_string(MAX_TRIES) + "\nThe word is: " + word + "\n";
 
 			write(finalFd, lossMessage.c_str(), lossMessage.length());
 			close(finalFd);
