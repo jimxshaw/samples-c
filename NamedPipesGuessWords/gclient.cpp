@@ -7,90 +7,88 @@ Purpose: This is a client-server word guessing game using named pipes,
 				list to provide randomized guess words.
 */
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <vector>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <cstring>
 #include "LineInfo.h"
 
 using namespace std;
-
-const int BUFFER_SIZE = 100;
+const int BUF_SIZE = 100;
 const int MAX_TRIES = 12;
-const string SERVER_REQUEST_PIPE = "request.pipe"; // Known pipe.
-
-string clientReadPipe;	// Client-created pipe for reading server responses.
-string clientWritePipe; // Server-created pipe for reading client guesses.
-
-int currentTry = 0;
-
-// Generate a unique client read pipe name.
-string createClientReadPipeName()
-{
-}
-
-// Create the client's read pipe and open it.
-void createAndOpenClientReadPipe(const string &pipeName)
-{
-}
-
-// Send pipe name to server via known pipe.
-void sendPipeNameToServer(const string &pipeName)
-{
-}
-
-// Open the server-provided pipe to write guesses.
-void openClientWritePipe(string &pipeName)
-{
-}
-
-// Read initial game setup from server (tries, word, server pipe name).
-void readGameInitFromServer(int &tryCount, string &wordToGuess, string &serverReadPipe)
-{
-}
-
-// Game loop: display, get user input, send guess, update try count.
-void playGameLoop(int tryCount, const string &randomWord, const string &serverReadPipe)
-{
-}
-
-// Clean up all pipes.
-void cleanUp()
-{
-}
+const string MAIN_PIPE = "server_request_fifo";
 
 int main()
 {
 	try
 	{
-		clientReadPipe = createClientReadPipeName();
-		createAndOpenClientReadPipe(clientReadPipe);
+		// Client creates its private pipe for server writes[]
+		string clientPipe = "client_read_fifo";
+		mkfifo(clientPipe.c_str(), 0666);
 
-		sendPipeNameToServer(clientReadPipe);
+		// Send client pipe name to server via known pipe.
+		int reqFd = open(MAIN_PIPE.c_str(), O_WRONLY);
+		if (reqFd < 0)
+			throw runtime_error(LineInfo("open MAIN_PIPE failed", __FILE__, __LINE__));
+		write(reqFd, clientPipe.c_str(), BUF_SIZE);
+		close(reqFd);
 
-		string randomWord;
+		// Read from the client pipe.
+		int clientReadFd = open(clientPipe.c_str(), O_RDONLY);
+		if (clientReadFd < 0)
+			throw runtime_error(LineInfo("open clientPipe failed", __FILE__, __LINE__));
 
-		readGameInitFromServer(currentTry, randomWord, clientWritePipe);
+		char buf[BUF_SIZE] = {0};
+		read(clientReadFd, buf, BUF_SIZE);
+		int tryCount = stoi(buf);
 
-		openClientWritePipe(clientWritePipe);
+		read(clientReadFd, buf, BUF_SIZE);
+		string randomWord(buf);
+		read(clientReadFd, buf, BUF_SIZE);
+		string serverReadPipe(buf);
 
-		cout << "Game Start\n\nYou have " << MAX_TRIES << " letter guesses to win\n\n";
+		// Connect to server’s read pipe for sending guesses.
+		int serverWriteFd = open(serverReadPipe.c_str(), O_WRONLY);
+		if (serverWriteFd < 0)
+			throw runtime_error(LineInfo("open serverReadPipe failed", __FILE__, __LINE__));
 
-		playGameLoop(currentTry, randomWord, clientWritePipe);
+		cout << "\nGame Start\nYou have 12 letter guesses to win\n";
 
-		cleanUp();
+		string guessWord;
+		while (true)
+		{
+			read(clientReadFd, buf, BUF_SIZE);
+			guessWord = buf;
+
+			if (guessWord == randomWord)
+			{
+				cout << "\nYou Win!\n";
+				break;
+			}
+			if (tryCount > MAX_TRIES)
+			{
+				cout << "\nOut of tries : " << MAX_TRIES << " allowed\n";
+				cout << "The word is: " << randomWord << endl;
+				break;
+			}
+
+			cout << "\nCurrent try number : " << tryCount
+					 << "\n(Guess) Enter a letter in the word : " << guessWord << endl;
+			char letter;
+			cin >> letter;
+			write(serverWriteFd, &letter, 1);
+			tryCount++;
+		}
+
+		close(clientReadFd);
+		close(serverWriteFd);
+		unlink(clientPipe.c_str());
 	}
 	catch (exception &e)
 	{
-		cout << e.what() << endl;
-		cout << "\nPress Enter once or twice to exit..." << endl;
-		cin.ignore();
-		cin.get();
-		exit(EXIT_FAILURE);
+		cerr << e.what() << endl;
 	}
-
 	return 0;
 }
