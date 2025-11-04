@@ -7,7 +7,7 @@ Purpose: This is a client-server word guessing game using named pipes,
 				list to provide randomized guess words.
 */
 #include <iostream>
-#include <fstream>6
+#include <fstream>
 #include <vector>
 #include <string>
 #include <sstream>
