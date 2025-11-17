@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
         << "Wrong arguments" << endl
         << "Usage: " << endl
         << "calculate < sum | average | greatest | least > filename.txt " << endl
-        << "filename <96> a file that contains integers, 1 integer per line " << "Example:" << endl
+        << "filename - a file that contains integers, 1 integer per line " << "Example:" << endl
         << "calculate sum filerandom.txt" << endl
         << endl;
 
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
     if (randNumStreamObj.fail())
     {
-      throw domain_error(LineInfo("\n\nopen Failure File\n\n" + *argv[2], __FILE__, __LINE__));
+      throw domain_error(LineInfo("\n\nopen Failure File\n\n" + string(argv[2]), __FILE__, __LINE__));
     }
 
     istream_iterator<int> inputIterator(randNumStreamObj);
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     }
     else if (command == "greatest")
     {
-      cout << "Least          : " << *(max_element(vectorInts.begin(), vectorInts.end())) << endl;
+      cout << "Greatest          : " << *(max_element(vectorInts.begin(), vectorInts.end())) << endl;
     }
     else
     {
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 
       s << endl
         << endl
-        << "Invalid Command: command" << endl
+        << "Invalid Command: " << command << endl
         << "Usage: " << endl
         << "calculate < sum | average | greatest | least > filename.txt " << endl
         << "filename <96> a file that contains integers, 1 integer per line " << "Example:" << endl
