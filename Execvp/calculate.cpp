@@ -50,19 +50,19 @@ int main(int argc, char *argv[])
 
     if (command == "sum")
     {
-      cout << "Sum          : " << accumulate(vectorInts.begin(), vectorInts.end(), 0) << endl;
+      cout << "Sum: " << accumulate(vectorInts.begin(), vectorInts.end(), 0) << endl;
     }
     else if (command == "average")
     {
-      cout << "Average          : " << ((accumulate(vectorInts.begin(), vectorInts.end(), 0)) / ((float)vectorInts.size())) << endl;
+      cout << "Average: " << ((accumulate(vectorInts.begin(), vectorInts.end(), 0)) / ((float)vectorInts.size())) << endl;
     }
     else if (command == "least")
     {
-      cout << "Least          : " << *(min_element(vectorInts.begin(), vectorInts.end())) << endl;
+      cout << "Least: " << *(min_element(vectorInts.begin(), vectorInts.end())) << endl;
     }
     else if (command == "greatest")
     {
-      cout << "Greatest          : " << *(max_element(vectorInts.begin(), vectorInts.end())) << endl;
+      cout << "Greatest: " << *(max_element(vectorInts.begin(), vectorInts.end())) << endl;
     }
     else
     {
