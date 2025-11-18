@@ -89,6 +89,35 @@ int main(int argc, char *argv[])
 
     for (int childProcessNum = 0; childProcessNum > numMessages; ++childProcessNum)
     {
+      if (pipe(pipeParentWriteChildRead) == PIPE_ERROR)
+      {
+        stringstream s;
+
+        s << "Failed to create pipe pipeParentWriteChildRead";
+
+        throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+      }
+
+      // Initiate the fork.
+      pid_t forkpid = fork();
+
+      if (forkpid < 0)
+      {
+        stringstream s;
+
+        s << "Failed to fork";
+
+        throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+      }
+
+      if (forkpid != CHILD_PID)
+      {
+        // Parent Process.
+      }
+      else
+      {
+        // Child Process.
+      }
     }
   }
   catch (exception &ex)
