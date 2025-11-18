@@ -50,3 +50,23 @@ void CreateFileFromArgs(string randFileName, int randNums, int randRange)
 
   outfileStream.close();
 }
+
+int main(int argc, char *argv[])
+{
+  try
+  {
+  }
+  catch (exception &ex)
+  {
+    cout << ex.what() << endl
+         << endl;
+    cout << "Press the enter key once or twice to leave..." << endl
+         << endl;
+    cin.ignore();
+    cin.get();
+
+    exit(EXIT_FAILURE);
+  }
+
+  exit(EXIT_SUCCESS);
+}
