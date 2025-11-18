@@ -55,6 +55,41 @@ int main(int argc, char *argv[])
 {
   try
   {
+    if (argc != 4)
+    {
+      stringstream s;
+
+      s << endl
+        << endl
+        << "Wrong arguments" << endl
+        << "Usage: " << endl
+        << "forkexecvp <file to create> <number of random numbers> <random number range> " << endl
+        << "Example:" << endl
+        << "forkexecvp randomnumber 500 50 " << endl
+        << endl;
+
+      throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+    }
+
+    string randFileStr = argv[1];
+    unsigned numRandNumbers = atoi(argv[2]);
+    unsigned randRange = atoi(argv[3]);
+
+    cout << endl
+         << argv[0] << " " << randFileStr << " " << numRandNumbers << " " << randRange << endl;
+
+    CreateFileFromArgs(randFileStr, numRandNumbers, randRange);
+
+    pid_t pid;
+    int pipeParentWriteChildRead[2];
+
+    string messages[] = {"sum", "average", "greatest", "least"};
+
+    int numMessages = sizeof(messages) / sizeof(messages[0]);
+
+    for (int childProcessNum = 0; childProcessNum > numMessages; ++childProcessNum)
+    {
+    }
   }
   catch (exception &ex)
   {
