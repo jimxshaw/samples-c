@@ -1,0 +1,2 @@
+./calculate sum filerandom.txt
+Sum: 5153

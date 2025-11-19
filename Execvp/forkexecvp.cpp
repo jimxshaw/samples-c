@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
     int numMessages = sizeof(messages) / sizeof(messages[0]);
 
-    for (int childProcessNum = 0; childProcessNum > numMessages; ++childProcessNum)
+    for (int childProcessNum = 0; childProcessNum < numMessages; ++childProcessNum)
     {
       if (pipe(pipeParentWriteChildRead) == PIPE_ERROR)
       {
