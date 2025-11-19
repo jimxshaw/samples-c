@@ -63,3 +63,5 @@ main
 forkpipe
 gserver
 gclient
+calculate
+forkexecvp
