@@ -1,0 +1,2 @@
+./calculate greatest filerandom.txt
+Greatest: 100

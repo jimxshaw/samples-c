@@ -1,0 +1,2 @@
+./calculate average filerandom.txt
+Average: 51.53

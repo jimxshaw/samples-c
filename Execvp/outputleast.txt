@@ -1,0 +1,2 @@
+./calculate least filerandom.txt
+Least: 3
