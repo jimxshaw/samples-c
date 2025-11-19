@@ -89,7 +89,157 @@ int main(int argc, char *argv[])
 
     for (int childProcessNum = 0; childProcessNum > numMessages; ++childProcessNum)
     {
+      if (pipe(pipeParentWriteChildRead) == PIPE_ERROR)
+      {
+        stringstream s;
+
+        s << "Failed to create pipe pipeParentWriteChildRead";
+
+        throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+      }
+
+      // Initiate the fork.
+      pid_t forkpid = fork();
+
+      if (forkpid < 0)
+      {
+        stringstream s;
+
+        s << "Failed to fork";
+
+        throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+      }
+
+      if (forkpid != CHILD_PID)
+      {
+        // Parent Process.
+        close(pipeParentWriteChildRead[READ]);
+
+        cout << "Parent pid: " << getpid() << " to Child Process number: " << childProcessNum << endl
+             << "Send Message: " << messages[childProcessNum] << endl;
+
+        if (write(pipeParentWriteChildRead[WRITE],
+                  messages[childProcessNum].c_str(),
+                  sizeof(messages[childProcessNum].c_str())) == PIPE_ERROR)
+        {
+          stringstream s;
+
+          s << "Pipe write failed";
+
+          throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+        }
+      }
+      else
+      {
+        // Child Process.
+        close(pipeParentWriteChildRead[WRITE]);
+
+        char pipeReadMessage[MAX_PIPE_MESSAGE_SIZE] = {0};
+
+        if (read(pipeParentWriteChildRead[READ],
+                 pipeReadMessage,
+                 sizeof(pipeReadMessage)) == PIPE_ERROR)
+        {
+          stringstream s;
+
+          s << "Pipe read failed";
+
+          throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+        }
+
+        cout << "Child pid: " << getpid() << " Child Process number: " << childProcessNum
+             << " Received Message: " << pipeReadMessage << endl;
+
+        // Execvp.
+        char *arglist[] = {(char *)"./calculate", pipeReadMessage, (char *)randFileStr.c_str(), NULL};
+
+        cout << "Child pid: " << getpid() << " Child Process number: " << childProcessNum << endl
+             << "execvp(" << arglist[0] << ", ./calculate, " << randFileStr.c_str() << ", NULL)" << endl;
+
+        string outputFileName = "output";
+
+        outputFileName += pipeReadMessage;
+        outputFileName += ".txt";
+
+        freopen(outputFileName.c_str(), "w", stdout);
+
+        close(pipeParentWriteChildRead[READ]);
+
+        if (execvp(arglist[0], arglist) == EXECVP_FAILED)
+        {
+          stringstream s;
+
+          s << "Execvp failed";
+
+          throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+        }
+      }
     }
+
+    cout << "Parent pid: " << getpid() << " Start - Wait for all calculate children to finish" << endl;
+
+    while (wait(NULL) > 0)
+    {
+      // Block here and repeatedly call wait() until it returns -1, meaning no children.
+      // Don’t run any code inside the loop.
+    }
+
+    cout << "Parent pid: " << getpid() << " Done - Wait for all calculate children to finish"
+         << endl
+         << endl;
+
+    close(pipeParentWriteChildRead[WRITE]);
+
+    cout << "Parent pid: " << getpid() << " Use execvp() cat to display output files: " << endl;
+
+    for (int childProcessNum = 0; childProcessNum < numMessages; ++childProcessNum)
+    {
+      pid_t forkpid = fork();
+
+      if (forkpid < 0)
+      {
+        stringstream s;
+
+        s << "Failed to fork";
+
+        throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+      }
+
+      if (forkpid == CHILD_PID)
+      {
+        // Child Process.
+        string outputFileName = "output";
+
+        outputFileName += messages[childProcessNum];
+        outputFileName += ".txt";
+
+        char *arglist[] = {(char *)"cat", (char *)outputFileName.c_str(), NULL};
+
+        cout << "Child pid: " << getpid() << endl
+             << "cat " << outputFileName << endl;
+
+        if (execvp("cat", arglist) == EXECVP_FAILED)
+        {
+          stringstream s;
+
+          s << "Execvp failed";
+
+          throw domain_error(LineInfo(s.str(), __FILE__, __LINE__));
+        }
+      }
+    }
+
+    cout << "Parent pid: " << getpid() << " Start - Wait for all calculate children to finish" << endl;
+
+    while (wait(NULL) > 0)
+    {
+      // Block here and repeatedly call wait() until it returns -1, meaning no children.
+      // Don’t run any code inside the loop.
+    }
+
+    cout << "Parent pid: " << getpid() << " Done - Wait for all calculate children to finish"
+         << endl
+         << endl;
   }
   catch (exception &ex)
   {
