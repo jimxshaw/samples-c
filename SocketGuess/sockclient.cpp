@@ -12,7 +12,7 @@ using namespace std;
 
 const int MESSAGE_MAX_SIZE = 1024;
 const int ERROR = -1;
-const int SOCK_PORT = 8888;
+const int SOCK_PORT = 9999;
 const string LOCAL_HOST_ADDRESS = "127.0.0.1";
 
 const int MAX_GUESS_LIMIT = 100;
