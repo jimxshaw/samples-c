@@ -73,7 +73,10 @@ int main(int argc, char *argv[])
 
             // read from socketServerId the receiveMessage
             char receiveMessage[MESSAGE_MAX_SIZE] = {0};
-            //$$
+            if ((read(socketServerId, receiveMessage, MESSAGE_MAX_SIZE)) == ERROR)
+            {
+                throw domain_error(LineInfo("Socket read failure", __FILE__, __LINE__));
+            }
 
             string receiveMessageStr = receiveMessage;
             cout << endl
@@ -91,19 +94,31 @@ int main(int argc, char *argv[])
             {
                 // display done for max no of tries
                 // write socketServerId Sned Random Number
-                //$$
+                cout << endl
+                     << "The maximum number of tries " << MAX_NO_TRIES << " is done." << endl;
+
+                if ((write(socketServerId, "Send random number", sizeof("Send random number") + 1)) == ERROR)
+                {
+                    throw domain_error(LineInfo("Socket write failure", __FILE__, __LINE__));
+                }
 
                 // read from socketServerId randomNoMessage
-                char randomNoMessage[MESSAGE_MAX_SIZE] = {0};
-                //$$
+                char randomNoMessage[MESSAGE_MAX_SIZE];
+                if ((read(socketServerId, randomNoMessage, MESSAGE_MAX_SIZE)) == ERROR)
+                {
+                    throw domain_error(LineInfo("Socket read failure", __FILE__, __LINE__));
+                }
 
                 int randomno = stoi(randomNoMessage);
 
                 // display the random no and state the game is over
-                //$$
+                cout << "The random number is : " << randomno << endl
+                     << endl;
+                cout << "Game is over " << endl
+                     << endl;
 
                 // leave the loop
-                //$$
+                break;
             }
 
         } while (true);
