@@ -65,3 +65,5 @@ gserver
 gclient
 calculate
 forkexecvp
+sockserver
+sockclient
