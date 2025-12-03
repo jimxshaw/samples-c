@@ -89,6 +89,10 @@ int main(int argc, char *argv[])
         {
             // Read a guess no messages in clientGuessNoMessage from client
             char clientGuessNoMessage[MESSAGE_MAX_SIZE] = {0};
+            if ((read_size = read(client_sock, clientGuessNoMessage, MESSAGE_MAX_SIZE)) == ERROR)
+            {
+                throw domain_error(LineInfo("Socket read failure", __FILE__, __LINE__));
+            }
 
             guessnostr = clientGuessNoMessage;
 
@@ -96,7 +100,10 @@ int main(int argc, char *argv[])
             if (guessnostr.find("Random Number") != std::string::npos)
             {
                 // write to client_sock the randomnostr
-                throw domain_error(LineInfo("Socket write failure ", __FILE__, __LINE__));
+                if ((write(client_sock, randomnostr.c_str(), randomnostr.size() + 1)) == ERROR)
+                {
+                    throw domain_error(LineInfo("Socket write failure ", __FILE__, __LINE__));
+                }
             }
 
             else
@@ -117,7 +124,10 @@ int main(int argc, char *argv[])
                         playresultstr = "The number is less than : " + guessnostr;
 
                     // write to client_sock playresultstr
-                    //$$
+                    if ((write(client_sock, playresultstr.c_str(), playresultstr.size() + 1)) == ERROR)
+                    {
+                        throw domain_error(LineInfo("Socket write failure ", __FILE__, __LINE__));
+                    }
                 }
 
                 else if (read_size == 0)
@@ -129,7 +139,8 @@ int main(int argc, char *argv[])
 
                 else if (read_size == ERROR)
                 {
-                    //$$ throw Socket read failure
+                    // throw Socket read failure
+                    throw domain_error(LineInfo("Socket read failure ", __FILE__, __LINE__));
                 }
             }
             // else its a guess no
