@@ -20,7 +20,7 @@ using namespace std;
 const int MESSAGE_MAX_SIZE = 1024;
 const int ERROR = -1;
 
-const int SOCK_PORT = 8888;
+const int SOCK_PORT = 9999;
 const int LISTEN_QUEUE_SIZE = 3;
 
 const int HIGHEST_NO = 100;
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         server.sin_port = htons(SOCK_PORT);
 
         // Bind socket_desc to server
-        int ret = (::bind(socket_desc, (struct sockaddr *)&server, sizeof(server)));
+        int ret = ::bind(socket_desc, (struct sockaddr *)&server, sizeof(server));
 
         if (ret == ERROR)
         {
