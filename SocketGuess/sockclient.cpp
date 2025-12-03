@@ -57,9 +57,10 @@ int main(int argc, char *argv[])
         do
         {
             // prompt for guessno
-            cout << "Current try number : " << +nooftries << endl;
+            cout << "Current try number : " << ++nooftries << endl;
             cout << "Enter number guess : " << endl
                  << endl;
+            cin >> guessno;
 
             stringstream guessnoss;
             guessnoss << guessno;
