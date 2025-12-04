@@ -189,6 +189,10 @@ int main(int argc, char *argv[])
         // terminate before the threads have completed.
 
         //$$ join to all the running threads
+        for (int singerNo = 0; singerNo < noOfSingers; ++singerNo)
+        {
+            pthread_join(singersThreadIdPtr[singerNo], NULL);
+        }
 
         cout << endl;
         cout << "Program done " << endl;
@@ -196,6 +200,10 @@ int main(int argc, char *argv[])
         cout << endl;
 
         //$$ pthread_mutex_destroy
+        if ((pthread_mutex_destroy(&myLock)) != 0)
+        {
+            throw domain_error(LineInfo("pthread_mutex_destroy", __FILE__, __LINE__));
+        }
     }
     catch (exception &e)
     {
