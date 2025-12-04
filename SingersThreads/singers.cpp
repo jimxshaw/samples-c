@@ -18,8 +18,21 @@ void GetLyricLinesFromFileToVector(string lyricsFilenameStr,
                                    vector<string> &lyricLinesVector,
                                    unsigned &noOfLyricLines)
 {
+    ifstream fileLyricsStream(lyricsFilenameStr);
 
-    //$$
+    if (fileLyricsStream.fail())
+    {
+        throw domain_error(LineInfo("File Open Failure", __FILE__, __LINE__));
+    }
+
+    string line;
+
+    while (getline(fileLyricsStream, line))
+    {
+        lyricLinesVector.push_back(line);
+    }
+
+    noOfLyricLines = lyricLinesVector.size();
 }
 
 struct SingLinesThreadInfoStruct
