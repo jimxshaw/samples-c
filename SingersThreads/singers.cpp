@@ -11,15 +11,28 @@
 
 using namespace std;
 
-pthread_mutex_t lock;
+pthread_mutex_t myLock;
 static unsigned totalLineCount;
 
 void GetLyricLinesFromFileToVector(string lyricsFilenameStr,
                                    vector<string> &lyricLinesVector,
                                    unsigned &noOfLyricLines)
 {
+    ifstream fileLyricsStream(lyricsFilenameStr);
 
-    //$$
+    if (fileLyricsStream.fail())
+    {
+        throw domain_error(LineInfo("File Open Failure", __FILE__, __LINE__));
+    }
+
+    string line;
+
+    while (getline(fileLyricsStream, line))
+    {
+        lyricLinesVector.push_back(line);
+    }
+
+    noOfLyricLines = lyricLinesVector.size();
 }
 
 struct SingLinesThreadInfoStruct
@@ -42,10 +55,19 @@ void *SingLinesThread(void *singLinesThreadInfoStructPtr)
     unsigned noOfLyricLines = threadInfoPtr->noOfLyricLines;
 
     // $$ lock the mutex
+    if ((pthread_mutex_lock(&myLock)) != 0)
+    {
+        throw domain_error(LineInfo("pthread_mutex_lock", __FILE__, __LINE__));
+    }
 
     //$$ display start thread message
+    cout << "start thread" << *singersNoIdPtr << endl;
 
     // $$ unlock the mutex
+    if ((pthread_mutex_unlock(&myLock)) != 0)
+    {
+        throw domain_error(LineInfo("pthread_mutex_unlock", __FILE__, __LINE__));
+    }
 
     // sing up to 10 lines at a time
     unsigned singLimit = 0;
@@ -60,27 +82,52 @@ void *SingLinesThread(void *singLinesThreadInfoStructPtr)
         {
 
             // $$ lock the mutex
+            if ((pthread_mutex_lock(&myLock)) != 0)
+            {
+                throw domain_error(LineInfo("pthread_mutex_lock", __FILE__, __LINE__));
+            }
 
-            if (previousNoId != *singersNoIdPtr) // for dipslay readabilty
-                cout << endl;
+            if (previousNoId != *singersNoIdPtr)
+            {
+                cout << endl; // for display readabilty
+            }
 
             //$$ display singer no and lyric line
+            cout << setw(3) << *singersNoIdPtr << " : " << setw(3) << currentLineSungNo
+                 << " > " << lyricLinesVector[currentLineSungNo] << endl;
 
             // $$ unlock the mutex
+            if ((pthread_mutex_unlock(&myLock)) != 0)
+            {
+                throw domain_error(LineInfo("pthread_mutex_unlock", __FILE__, __LINE__));
+            }
 
             //$$ update previousNoId and increment totalLineCount;
+            previousNoId = *singersNoIdPtr;
+            ++totalLineCount;
         }
 
         //$$ get up time slice for 1 second
+        sleep(1);
     }
 
     // $$ lock the mutex
+    if ((pthread_mutex_lock(&myLock)) != 0)
+    {
+        throw domain_error(LineInfo("pthread_mutex_lock", __FILE__, __LINE__));
+    }
 
     //$$ display done   thread with singersNoIdPtr
+    cout << "done thread" << *singersNoIdPtr << endl;
 
-    // $$ lock the mutex
+    // $$ unlock the mutex
+    if ((pthread_mutex_unlock(&myLock)) != 0)
+    {
+        throw domain_error(LineInfo("pthread_mutex_unlock", __FILE__, __LINE__));
+    }
 
     //$$ exit the pthread
+    pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[])
@@ -92,6 +139,11 @@ int main(int argc, char *argv[])
         if (argc != 3)
         {
             //$$string errorStr = "Usage : ";
+            string errorStr = "Usage : ";
+            errorStr = errorStr.append("\n./singers <lyrics filename.txt> <number of singers>");
+            errorStr = errorStr.append("\nExample : \n./singers PopLife.txt 4\n");
+
+            throw domain_error(LineInfo("Incorrect File Arguments", __FILE__, __LINE__));
         }
 
         string lyricsFilenameStr(argv[1]);
@@ -104,6 +156,8 @@ int main(int argc, char *argv[])
         cout << endl
              << endl;
         //$$
+        cout << "Song Lyrics File Name is : " << lyricsFilenameStr << endl;
+        cout << "Number of lyric lines is : " << noOfLyricLines << endl;
         cout << endl
              << endl;
 
@@ -116,6 +170,10 @@ int main(int argc, char *argv[])
         singLinesThreadInfoStructPtr = new SingLinesThreadInfoStruct[noOfSingers];
 
         //$$ initialize the pthread mutex lock
+        if ((pthread_mutex_init(&myLock, NULL)) != 0)
+        {
+            throw domain_error(LineInfo("pthread_mutex_init", __FILE__, __LINE__));
+        }
 
         // Create independent threads each of which will execute the pthread function
         for (unsigned singerNo = 0; singerNo < noOfSingers; ++singerNo)
@@ -125,14 +183,34 @@ int main(int argc, char *argv[])
             *singerNoIdPtr = singerNo + 1;
 
             //$$ Fill the singLinesThreadInfoStructPtr[singerNo] with the corresponding variable values
+            singLinesThreadInfoStructPtr[singerNo].singerNoIdPtr = singerNoIdPtr;
+            singLinesThreadInfoStructPtr[singerNo].lyricLinesVector = lyricLinesVector;
+            singLinesThreadInfoStructPtr[singerNo].noOfLyricLines = noOfLyricLines;
 
             // $$ lock the mutex
+            if ((pthread_mutex_lock(&myLock)) != 0)
+            {
+                throw domain_error(LineInfo("pthread_mutex_lock", __FILE__, __LINE__));
+            }
 
             // display create thread with *singerNoIdPtr
+            cout << "create thread" << *singersNoIdPtr << endl;
 
             // $$ unlock the mutex
+            if ((pthread_mutex_unlock(&myLock)) != 0)
+            {
+                throw domain_error(LineInfo("pthread_mutex_unlock", __FILE__, __LINE__));
+            }
 
             //$$ create the thread using function SingLinesThread
+            int threadCreateReturn = pthread_create(&(singersThreadIdPtr[singerNo]),
+                                                    NULL, SingLinesThread,
+                                                    (void *)&singLinesThreadInfoStructPtr[singerNo]);
+
+            if (threadCreateReturn != 0)
+            {
+                throw domain_error(LineInfo("pthread_create", __FILE__, __LINE__));
+            }
 
         } // for
 
@@ -142,6 +220,10 @@ int main(int argc, char *argv[])
         // terminate before the threads have completed.
 
         //$$ join to all the running threads
+        for (int singerNo = 0; singerNo < noOfSingers; ++singerNo)
+        {
+            pthread_join(singersThreadIdPtr[singerNo], NULL);
+        }
 
         cout << endl;
         cout << "Program done " << endl;
@@ -149,6 +231,10 @@ int main(int argc, char *argv[])
         cout << endl;
 
         //$$ pthread_mutex_destroy
+        if ((pthread_mutex_destroy(&myLock)) != 0)
+        {
+            throw domain_error(LineInfo("pthread_mutex_destroy", __FILE__, __LINE__));
+        }
     }
     catch (exception &e)
     {
