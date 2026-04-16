@@ -1,4 +1,4 @@
-// This is a verilog module for an example Mealy FSM.+
+// This is a verilog module for an example Mealy FSM.
 module fsm_mealy (
     input clk,        // Clock signal.
     input reset,      // Reset to S0.
